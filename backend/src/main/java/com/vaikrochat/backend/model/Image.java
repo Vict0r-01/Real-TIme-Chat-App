@@ -35,7 +35,11 @@ public class Image {
     @OneToMany(mappedBy = "chatImage")
     private Set<Chat> chats = new HashSet<>();
 
+    @ManyToMany(mappedBy = "images")
+    private Set<Message> messages = new HashSet<>();
+    
     public Image() {
+        this.url = "/uploads/default.png";
     }
 
     public Image(String fileName, String url, String contentType, Long size) {

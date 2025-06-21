@@ -3,7 +3,6 @@ import { useEffect, memo } from 'react';
 
 const Toast = memo(({ message, type = 'error', show, onHide }) => {
     useEffect(() => {
-        console.log("Toast is showing: "+show);
         if(show) {
             const timer = setTimeout(() => {
                 onHide();

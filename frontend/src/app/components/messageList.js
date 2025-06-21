@@ -15,7 +15,7 @@ const MessageList = memo(({ messages}) => {
     scrollToBottom();
   }, [messages]);
   return (
-    <div className="flex-1 overflow-y-auto border-2 border-yellow-300 rounded-lg h-[calc(100vh-100px)] w-full mb-2">
+    <div className="flex-1 overflow-y-auto border-2 border-yellow-300 rounded-lg h-[calc(100vh-100px)] w-full mb-2 transition-opacity duration-500">
       {messages.map((message, index) => (
         <div key={`${message.id}-${index}`} 
              className={`flex items-start m-2 ${message?.sender === username ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -34,10 +34,11 @@ const MessageList = memo(({ messages}) => {
               ? 'bg-yellow-200 text-black' 
               : 'bg-gray-200 text-black'
           }`}>
-            {message?.content && (
+            {(message?.content || message?.imageUrls) && (
               <Message 
                 sender={message.sender === username ? 'You' : message.sender || 'Unknown'} 
-                text={message.content} 
+                text={message.content}
+                imageUrls={message.imageUrls || []} 
                 timestamp={message.timestamp} 
               />
             )}

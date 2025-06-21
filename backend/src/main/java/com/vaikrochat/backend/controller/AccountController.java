@@ -36,7 +36,11 @@ public class AccountController {
     @PutMapping(value = "profile/{username}/updateProfilePicture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> updateProfilePicture(@PathVariable String username, @RequestPart(value = "image") MultipartFile profilePicture) {
         try {
-            String profilePictureUrl = accountService.updateProfilePicture(username, profilePicture);
+            Account account = accountService.getCurrentUser();
+
+            if(!account.getUsername().equals(username)) return ResponseEntity.status(401).build();
+
+            String profilePictureUrl = accountService.updateProfilePicture(account, profilePicture);
             Map<String, String> response = new HashMap<>();
             response.put("profilePictureUrl", profilePictureUrl);
             return ResponseEntity.ok(response);
@@ -47,8 +51,13 @@ public class AccountController {
     @PutMapping("profile/{username}/updateUsername")
     public ResponseEntity<Void> updateUsername(@PathVariable String username, @RequestBody UsernameRequest newUsername) {
         try{
-        accountService.updateUsername(username, newUsername.newUsername());
-        return ResponseEntity.ok().build();
+            Account account = accountService.getCurrentUser();
+
+            System.out.println("UPDATING USERNAME!!");
+            if(!account.getUsername().equals(username)) return ResponseEntity.status(401).build();
+
+            accountService.updateUsername(account, newUsername.newUsername());
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(500).build(); // Internal server error
         }
@@ -57,8 +66,12 @@ public class AccountController {
     @PutMapping("profile/{username}/updatePassword")
     public ResponseEntity<Void> updatePassword(@PathVariable String username, @RequestBody PasswordRequest newPassword) {
         try {
+            Account account = accountService.getCurrentUser();
+            System.out.println("UPDATING PASSWORD!!!");
+            if(!account.getUsername().equals(username)) return ResponseEntity.status(401).build();
+
             System.out.println("New Password: " + newPassword.newPassword());
-            accountService.updatePassword(username, newPassword.newPassword());
+            accountService.updatePassword(account, newPassword.newPassword());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(500).build(); // Internal server error

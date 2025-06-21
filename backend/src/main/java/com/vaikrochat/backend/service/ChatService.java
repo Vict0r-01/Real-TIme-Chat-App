@@ -1,7 +1,6 @@
 package com.vaikrochat.backend.service;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,29 +30,23 @@ public class ChatService {
         this.accountRepository = accountRepository;
         this.chatRepo = chatRepo;
     }
-    public List<Chat> getChats() {
-        return chatRepo.findAll();
-    }
 
     public Chat getChatById(int chatId) {
         return chatRepo.findById(chatId)
             .orElseThrow(() -> new RuntimeException("Chat not found"));
     }
 
-    public Set<Chat> getChats(String username) {
-        Account account = accountRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
+    public Set<Chat> getChats(Account account) {
         Set<Chat> chats = account.getChats();
         
         return chats;
     }
 
-    public Chat createChat(Chat chatRequest, String username, MultipartFile image) {
+    public Chat createChat(Chat chatRequest, MultipartFile image) {
         // Create new chat instance
         Chat newChat = new Chat();
         Image chatImage = null;
-        System.out.println("Creating chat with name: " + chatRequest.getName() + " for user: " + username);
+        System.out.println("Creating chat with name: " + chatRequest.getName());
         try{
             // If an image is provided, save it
             if (image != null && !image.isEmpty()) {
@@ -98,7 +91,7 @@ public class ChatService {
         
         newChat.setRawParticipants(participants);
 
-        System.out.println("Saving chat with name: " + newChat.getName() + " for user: " + username);
+        System.out.println("Saving chat with name: " + newChat.getName());
         return chatRepo.save(newChat);
     }
     

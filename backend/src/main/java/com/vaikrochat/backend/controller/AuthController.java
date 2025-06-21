@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vaikrochat.backend.DTO.LoginResponse;
@@ -13,6 +14,7 @@ import com.vaikrochat.backend.service.AccountService;
 import com.vaikrochat.backend.service.JwtService;
 
 @RestController
+@RequestMapping("/auth")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
     private final JwtService jwtService;
@@ -34,7 +36,8 @@ public class AuthController {
         // If valid, generate a JWT token
         String token = jwtService.generateToken(loginRequest.getUsername());
         return ResponseEntity.ok(new LoginResponse(token, 
-        new LoginResponse.AccountDTO(account.getId(), account.getUsername(), account.getProfilePicture().getUrl())));
+        new LoginResponse.AccountDTO(account.getId(), account.getUsername(), 
+        account.getProfilePicture() != null ? account.getProfilePicture().getUrl() : null)));
     }
 
     @PostMapping("/validate")
@@ -48,4 +51,5 @@ public class AuthController {
             return ResponseEntity.status(401).body(false); // Invalid token
         }
     }
+
 }

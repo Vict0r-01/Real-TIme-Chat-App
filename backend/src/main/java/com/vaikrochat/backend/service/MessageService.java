@@ -10,6 +10,7 @@ import com.vaikrochat.backend.repository.MessageRepo;
 @Service
 public class MessageService {
     private final MessageRepo messageRepo;
+    
 
     public MessageService(MessageRepo messageRepo) {
         this.messageRepo = messageRepo;
@@ -21,4 +22,5 @@ public class MessageService {
     public Message saveMessage(Message message) {
         return messageRepo.save(message);
     }
+
 }

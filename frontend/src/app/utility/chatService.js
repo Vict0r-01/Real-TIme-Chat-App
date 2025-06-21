@@ -12,12 +12,23 @@ export function useWebSocket(username, onMessageReceived) {
             return;
         }
 
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS('http://localhost:8080/ws', null, {
+            transportOptions: {
+                websocket: {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            }
+        });
         const client = new Client({
             webSocketFactory: () => socket,
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
+             connectHeaders: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             onConnect: () => {
                 console.log('Connected to WebSocket');
                 setConnected(true);
@@ -51,37 +62,33 @@ export function useWebSocket(username, onMessageReceived) {
         };
     }, [username, connect]);
 
-    const sendMessage = useCallback((chatId, content) => {
+    const sendMessage = useCallback( async (chatId, formData) => {
+        
         if (!clientRef.current?.active) {
             console.log('Reconnecting WebSocket...');
             connect();
-            // Delay sending message until connection is established
-            setTimeout(() => {
-                if (clientRef.current?.active) {
-                    clientRef.current.publish({
-                        destination: '/app/chat.sendMessage',
-                        body: JSON.stringify({
-                            chatId,
-                            text: content,
-                            sender: username,
-                            timestamp: new Date().toISOString()
-                        })
-                    });
-                }
-            }, 1000);
             return;
         }
 
-        console.log('Sending message:', content);
-        clientRef.current.publish({
-            destination: '/app/chat.sendMessage',
-            body: JSON.stringify({
-                chatId,
-                text: content,
-                sender: username,
-                timestamp: new Date().toISOString()
+        if(formData.getAll('images') != null || formData.get('text').length > 0) {
+            const response = await fetch(`http://localhost:8080/chat/${chatId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: formData
             })
-        });
+            
+            if(response.ok) {
+                console.log('Message sent successfully');
+                const data = await response.json();
+                clientRef.current.publish({
+                    destination: `/app/chat.sendMessage`,
+                    body: JSON.stringify(data)
+                });
+            }
+        } else return;
+        
     }, [username, connect]);
 
     return { connected, sendMessage };

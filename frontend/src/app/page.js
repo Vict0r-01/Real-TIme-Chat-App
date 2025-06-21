@@ -1,12 +1,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import ChatList from './components/chatList';
 import MessageList from './components/messageList';
 import { useAuth } from './context/authContext';
 import { useWebSocket } from './utility/chatService';
 import ChatModal from './components/chatModal';
-import { checkAuth } from './utility/checkAuth';
 import { styles } from './styles/style';
 import DropdownMenu from './components/dropdownMenu';
 import FriendModal from './components/friendModal';
@@ -17,8 +16,7 @@ export default function Home() {
   const [isChatModalOpen, setChatModalOpen] = useState(false);
   const [isFriendModalOpen, setFriendModalOpen] = useState(false);
   const [chatBoxes, setChatBoxes] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [isAuth, setAuth] = useState(false);
+  const [messages, setMessages] = useState(new Map());
   const {username, setUsername, logout} = useAuth();
   const [messageText, setMessageText] = useState('');
   const [chatName, setChatName] = useState('');
@@ -26,14 +24,17 @@ export default function Home() {
   const [chatImage, setChatImage] = useState(null);
   const [chatImagePreview, setChatImagePreview] = useState('https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y');
   const [friendName, setFriendName] = useState('');
-  const [chatId, setChatId] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const memoizedChatBoxes = useMemo(() => chatBoxes, [chatBoxes]);
+  const [messageImages, setMessageImages] = useState([]);
+  const [messageImagePreviews, setMessageImagePreviews] = useState([]);
+  const [chatId, setChatId] = useState(null);
+  
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
     console.log('------------------Adding chat box--------------------');
-    setChatBoxes([...chatBoxes, {
+    setChatBoxes(prev => [...prev, {
       name: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).username || chat.name 
             : chat.name,
@@ -42,34 +43,32 @@ export default function Home() {
             ? chat.participants.find(p => p.username !== username).profileImageUrl || chat.imageUrl 
             : chat.imageUrl
     }]);
-  });
+  }, [username]);
 
   //Add Message
-  const addMessage = useCallback((message) => {
-    console.log('------------------Adding message--------------------');
-    if (!message?.text) return; // Don't add empty messages
-    setMessages(prevMessages => [...prevMessages, {
-      sender: message.sender,
-      content: message.text,
-      timestamp: message.timestamp || new Date().toISOString(),
-      profilePicture: message.profilePictureUrl
-    }]);
-  }, []);
-  //WebSocket
-  const { connected, sendMessage } = useWebSocket(username, addMessage);
+  const addMessageRef = useRef();
+addMessageRef.current = (message) => {
+  setMessages(prevMap => {
+      const newMap = new Map(prevMap);
+      const currentMessages = newMap.get(chatId) || [];
+      const newMessages = [...currentMessages, {
+          sender: message.sender,
+          content: message.text,
+          imageUrls: message.imageUrls || [],
+          timestamp: message.timestamp || new Date().toISOString(),
+          profilePicture: message.profilePictureUrl
+      }];
+      newMap.set(chatId, newMessages);
+      return newMap;
+  });
+};
 
-  //Check Auth
+const stableAddMessage = useCallback((msg) => addMessageRef.current(msg), []);
+const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
+
   useEffect(() => {
-
-    if(checkAuth(router, username, setUsername))
-      setAuth(true);
-  }, [router]);
-
-  useEffect(() => {
-    if (!isAuth) return;
-    console.log('Loading chats for user:', username);
     loadChats();
-  }, [username, isAuth]);
+  }, [username]);
 
   const loadChats = async () => {
     console.log('Loading chats...');
@@ -82,19 +81,13 @@ export default function Home() {
         },
       });
       
-      // Add this debug logging
-      const rawResponse = await response.text();
-      console.log('Raw response:', rawResponse);
-      
-      // Check if the response is valid JSON
-      if (!rawResponse || rawResponse.trim() === '') {
-        setToastMessage('Empty response from server');
-        setShowToast(true);
-        return;
-      }
-      // Parse the response
-      const data = JSON.parse(rawResponse);
-      if (response.ok && data) {
+      if (response.ok) {
+        const data = await response.json();
+        if(!data) {
+          setToastMessage('No chats found');
+          setShowToast(true);
+          return;
+        }
         console.log('Parsed chat data:', data);
         const formattedChats = data.map(chat => ({
           id: chat.id,
@@ -107,6 +100,22 @@ export default function Home() {
             : chat.imageUrl
         }));
         setChatBoxes(formattedChats);
+
+      } else {
+        //Error handling
+        const errorData = await response.json();
+        if(response.status === 401 && errorData.message === "Token Expired") {
+          setToastMessage('Session expired. Please log in again.');
+          setShowToast(true);
+          logout();
+          router.push('/login');
+        }
+        if(response.status === 401) {
+          setToastMessage('Unauthorized access. Please log in again.');
+          setShowToast(true);
+          logout();
+          router.push('/login');
+        }
       }
     } catch (error) {
       setToastMessage('Error fetching chat boxes');
@@ -118,40 +127,39 @@ export default function Home() {
     }
   };
 
-  const loadMessages = useCallback(async (chat_Id) => {
-    console.log('Setting chat ID:', chatId , 'to:', chat_Id);
-    setChatId(chat_Id);
-    if(chat_Id === chatId) return;
+  // Load messages for a specific chat
+  const loadMessages = async (chat_Id) => {
+
     console.log('Loading messages for chat:', chat_Id);
     try{
       const response = await fetch(`http://localhost:8080/chat/${chat_Id}/messages`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       // Debug raw response
       const rawData = await response.text();
-      console.log('Raw message data:', rawData);
       // Parse the response
       const data = JSON.parse(rawData);
-      console.log('Parsed data:', data);
       if (response.ok && data) {
         const formattedMessages = data.map(message => ({
           id: message.id,
           sender: message.sender || 'Unknown',
           content: message.text,
+          imageUrls: message.imageUrls || [],
           timestamp: message.timestamp,
           profilePicture: message.profilePictureUrl
         }));
         console.log('Parsed message data:', formattedMessages);
-        setMessages(formattedMessages);
+        setMessages(prev => new Map(prev).set(chat_Id, formattedMessages));
       }
     }catch (error) {
       setToastMessage('Error fetching messages');
       setShowToast(true);
     }
-  }, [setMessages, setToastMessage, setShowToast]);
+  };
   // Save Chat
   const saveChat = async () => {
     try {
@@ -224,8 +232,13 @@ export default function Home() {
   }
   // Load messages of selected chat
   const handleChatSelect = useCallback((selectedChatId) => {
+    setChatId(selectedChatId);
+    setMessageImagePreviews([]);
+    setMessageImages([]);
+    setMessageText('');
+    if(selectedChatId === chatId || messages.has(selectedChatId)) return;
     loadMessages(selectedChatId);
-  }, []);
+}, [chatId, messages]);
 
   // Handle Message Change
   const handleMessageChange = useCallback((e) => {
@@ -244,11 +257,25 @@ export default function Home() {
   // Handle message submission
   const handleMessageSubmit = useCallback((e) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
+    if (!messageText.trim() && messageImages.length === 0) return;
 
-    sendMessage(chatId, messageText);
+    const formData = new FormData();
+    if(messageText.trim()) formData.append('text', messageText);
+    else formData.append('text', '');
+    if(messageImages) {
+      console.log('Appending single image');
+      messageImages.forEach((image) => formData.append('images', image));}
+
+    sendMessage(chatId, formData);
     setMessageText('');
-  }, [messageText, chatId, sendMessage]);
+    setMessageImages([]);
+    setMessageImagePreviews(prev => {
+        // Clean up old preview URLs
+        prev.forEach(url => URL.revokeObjectURL(url));
+        return [];
+    });
+    e.target.querySelector('input[type="file"]').value = '';
+  }, [messageText, sendMessage, messageImages, messageImagePreviews]);
 
   // Handle chat submission
   const handleChatSubmit = useCallback((e) => {
@@ -273,6 +300,16 @@ export default function Home() {
   // Update your image change handler
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+      setToastMessage('Please select a valid image file');
+      setShowToast(true);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      setToastMessage('Image size exceeds 2MB limit');
+      setShowToast(true);
+      return;
+    }
     if (file) {
       // Show preview immediately using blob URL
       const previewUrl = URL.createObjectURL(file);
@@ -280,6 +317,28 @@ export default function Home() {
       setChatImage(file);
     }
   };
+
+  const handleMessageImageChange = useCallback((e) => {
+    const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+    if (files.length === 0) {
+        setToastMessage('Please select valid image files');
+        setShowToast(true);
+        return;
+    }
+    if (files.some(file => file.size > 2 * 1024 * 1024)) { // 2MB limit
+        setToastMessage('One or more images exceed the 2MB size limit');
+        setShowToast(true);
+        return;
+    }
+    if (files.length > 0) {
+        // Add new files to existing ones
+        setMessageImages(prevImages => [...prevImages, ...files]);
+        
+        // Create and add new preview URLs
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setMessageImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
+    }
+  }, [messageImagePreviews]);
 
   return (
     <div className="h-screen flex flex-col">
@@ -293,7 +352,7 @@ export default function Home() {
             onAddFriend={() => setFriendModalOpen(true)}
             onLogout={() => {
               logout();
-              setAuth(false);
+              // setAuth(false);
               router.push('/login');
             }}
           />
@@ -365,15 +424,35 @@ export default function Home() {
         <ChatList chatBoxes={memoizedChatBoxes} onChatSelect={handleChatSelect} />
         
         <div className={`flex flex-col mt-2 mr-2 mb-2 w-full ${chatId == null ? 'hidden' : ''}`}>
-          <MessageList messages={messages}/>
+          <MessageList key={chatId} messages={messages.get(chatId) || []}/>
           
+          {messageImagePreviews.length > 0 && (
+              <div className='flex flex-wrap gap-2 mb-2'>
+                {messageImagePreviews.map((preview, index) => (
+                  <img 
+                    key={index} 
+                    src={preview} 
+                    alt={`Preview ${index + 1}`} 
+                    className='w-20 h-20 object-cover rounded-lg border border-yellow-300'
+                  />
+                ))}
+              </div>
+            )}
           <form className='flex items-center p-2 w-full' onSubmit={handleMessageSubmit}>
+            
             <input 
               className={`${styles.input} w-full`}
               type="text"
               value={messageText}
               onChange={handleMessageChange}
               placeholder="Type a message..."
+            />
+            <input className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} 
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleMessageImageChange}
+            disabled={chatId == null}
             />
             <button className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;
             </button>

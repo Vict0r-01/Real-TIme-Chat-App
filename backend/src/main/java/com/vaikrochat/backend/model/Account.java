@@ -33,7 +33,7 @@ public class Account  {
     private String password;
 
     @ManyToOne
-    private Image profilePicture;
+    private Image profilePicture = new Image();
 
     @ManyToMany
     @JoinTable(

@@ -1,6 +1,13 @@
 import { memo } from 'react';
 import ChatBox from './chatBox';
 
+const areEqual = (prevProps, nextProps) => {
+  return (
+    prevProps.chatBoxes === nextProps.chatBoxes &&
+    prevProps.onChatSelect === nextProps.onChatSelect
+  );
+};
+
 const ChatList = memo(({ chatBoxes, onChatSelect }) => {
   console.log('Rendering ChatList with chatBoxes:', chatBoxes);
   return (
@@ -24,7 +31,7 @@ const ChatList = memo(({ chatBoxes, onChatSelect }) => {
       )}
     </div>
   );
-});
+}, areEqual);
 
 ChatList.displayName = 'ChatList';
 export default ChatList;

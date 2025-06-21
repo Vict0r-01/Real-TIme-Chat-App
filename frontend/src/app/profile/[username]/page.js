@@ -2,10 +2,10 @@
 import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { checkAuth } from "../../utility/checkAuth";
 import { useAuth } from "../../context/authContext";
 import { styles } from "@/app/styles/style";
 import { getImageUrl } from "@/app/config/imageUrl";
+import Toast from "@/app/components/toast";
 
 export default function Profile() {
     const { username: currentUser, setUsername: setCurrentUser, setProfileImage } = useAuth();
@@ -14,17 +14,14 @@ export default function Profile() {
     const [allowEdit, setAllowEdit] = useState(false);
     const [usernameDisplay, setUsernameDisplay] = useState(false);
     const [passwordDisplay, setPasswordDisplay] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [showToast, setShowToast] = useState(false);
     const fileInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
     const { username } = params; // Get username from URL
 
     useEffect(() => {
-        checkAuth(router, currentUser, setCurrentUser);
-    }, [router, currentUser]);
-
-    useEffect(() => {
-        console.log(currentUser + '------' + username);
         if (username) {
             getUserData(username);
         }
@@ -48,10 +45,14 @@ export default function Profile() {
                 setUsernameDisplay(data.username);
                 setPasswordDisplay(data.password);
             } else {
-                console.error('Failed to fetch user data:', response.statusText);
+                setToastMessage('Failed to fetch user data');
+                setShowToast(true);
+                if(response.status === 401)
+                    router.push('/login'); // Redirect to login if unauthorized
             }
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            setToastMessage('Error fetching user data');
+            setShowToast(true);
         } finally {
             setIsLoading(false);
         }
@@ -81,10 +82,10 @@ export default function Profile() {
                 }));
                 setProfileImage(data.profilePictureUrl);
             } else {
-                console.error('Failed to update image');
+                setToastMessage('Failed to update image');
             }
         }catch (error) {
-        console.error('Error updating profile image:', error);
+       setToastMessage('Error updating profile image');
         }
     };
 
@@ -105,9 +106,13 @@ export default function Profile() {
                     ...prevData,
                     name: newUsername,
                 }));
+                router.push(`/login`); // Redirect to the updated profile
+            } else {
+                setToastMessage('Failed to update username');
+                setShowToast(true);
             }
         } catch (error) {
-            console.error('Error updating username:', error);
+            setToastMessage('Error updating username');
         }
     };
 
@@ -127,9 +132,12 @@ export default function Profile() {
                     ...prevData,
                     password: newPassword,
                 }));
+            } else {
+                setToastMessage('Failed to update password');
+                setShowToast(true);
             }
         } catch (error) {
-            console.error('Error updating password:', error);
+            setToastMessage('Error updating password');
         }
     };
 
@@ -150,6 +158,7 @@ export default function Profile() {
     };
     return (
         <div className="container mx-auto p-2">
+            <Toast message={toastMessage} show={showToast} onHide={() => setShowToast(false)} />
             {userData ? (
                 <div className="flex flex-col items-center">
                     <div className="flex items-center justify-between mb-4 w-full">
@@ -226,16 +235,21 @@ export default function Profile() {
                                 </button>
                             <button 
                                     className={styles.button}
-                                    onClick={() => {
-                                        if(userData.username !== usernameDisplay) {
-                                            updateUsername(userData.username);
-                                            localStorage.removeItem('token');
-                                        }
-                                        if(userData.password !== passwordDisplay) {
-                                            updatePassword(userData.password);
-                                            localStorage.removeItem('token');
-                                        }
+                                    onClick={async () => {
+                                        let usernameChanged = userData.username !== usernameDisplay;
+                                        let passwordChanged = userData.password !== passwordDisplay;
+                                        
+                                        if(passwordChanged)
+                                            await updatePassword(userData.password);
+
+                                        if(usernameChanged) 
+                                            await updateUsername(userData.username);
+
                                         setAllowEdit(false);
+                                        if(usernameChanged || passwordChanged) {
+                                            localStorage.removeItem('token');
+                                            router.push('/login');
+                                        }
                                     }}
                                 >
                                     Save Changes

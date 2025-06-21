@@ -1,22 +1,29 @@
 package com.vaikrochat.backend.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.vaikrochat.backend.DTO.ChatMessage;
 import com.vaikrochat.backend.model.Account;
 import com.vaikrochat.backend.model.Chat;
+import com.vaikrochat.backend.model.Image;
 import com.vaikrochat.backend.model.Message;
 import com.vaikrochat.backend.service.AccountService;
 import com.vaikrochat.backend.service.ChatService;
+import com.vaikrochat.backend.service.ImageService;
 import com.vaikrochat.backend.service.MessageService;
 
 @RestController
@@ -26,14 +33,16 @@ public class MessageController {
     private final MessageService messageService;
     private final AccountService accountService;
     private final ChatService chatService;
+    private final ImageService imageService;
 
-    public MessageController(MessageService messageService, AccountService accountService, ChatService chatService) {
+    public MessageController(MessageService messageService, AccountService accountService, ChatService chatService, ImageService imageService) {
         this.chatService = chatService;
+        this.imageService = imageService;
         this.accountService = accountService;
         this.messageService = messageService;
     }
 
-
+    @Transactional
     @GetMapping("/chat/{chatId}/messages")
     public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable int chatId) {
         List<Message> messages = messageService.getMessagesByChatId(chatId);
@@ -43,14 +52,33 @@ public class MessageController {
         return ResponseEntity.ok(chatMessages);
     }
 
+    @PostMapping("/chat/{chatId}/messages")
+    public ResponseEntity<ChatMessage> createMessage(
+        @PathVariable int chatId,
+        @RequestPart(value = "text", required = false) String text,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        
+        Chat chat = chatService.getChatById(chatId);
+        Account sender = accountService.getCurrentUser();
+        List<Image> imagesMessage = new ArrayList<>();
+        
+        if (images != null && !images.isEmpty()) {
+            System.out.println("Storing IMAGES!!");
+            for (MultipartFile image : images) {
+                imagesMessage.add(imageService.storeFile(image));
+            }
+        }
+        if(text == null) {
+            text = "";
+        }
+        Message message = new Message(sender, chat, text, imagesMessage);
+        messageService.saveMessage(message);
+        
+        return ResponseEntity.ok(ChatMessage.fromMessage(message));
+    }
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/chat")
     public ChatMessage sendMessage(@Payload ChatMessage message) {
-        Chat chat = chatService.getChatById(message.getChatId());
-        Account sender = accountService.getAccountByUsername(message.getSender());
-        message.setProfilePictureUrl(sender.getProfilePicture().getUrl());
-        System.out.println("Sender: " + sender.getUsername()+ "Chat: " + chat.getName()+ "Message: " + message.getText());
-        messageService.saveMessage(new Message(sender, chat, message.getText()));
         return message;
     }
 
