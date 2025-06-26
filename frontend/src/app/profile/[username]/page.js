@@ -6,6 +6,7 @@ import { useAuth } from "../../context/authContext";
 import { styles } from "@/app/styles/style";
 import { getImageUrl } from "@/app/config/imageUrl";
 import Toast from "@/app/components/toast";
+import { ApiError } from "next/dist/server/api-utils";
 
 export default function Profile() {
     const { username: currentUser, setUsername: setCurrentUser, setProfileImage } = useAuth();
@@ -20,6 +21,7 @@ export default function Profile() {
     const router = useRouter();
     const params = useParams();
     const { username } = params; // Get username from URL
+    const API = process.env.BACKEND_API_URL;
 
     useEffect(() => {
         if (username) {
@@ -30,7 +32,7 @@ export default function Profile() {
     const getUserData = async (profileUsername) => {
         try {
             setIsLoading(true);
-            const response = await fetch(`http://localhost:8080/profile/${profileUsername}`, {
+            const response = await fetch(`${API}/profile/${profileUsername}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,7 +68,7 @@ export default function Profile() {
         const formData = new FormData();
         formData.append('image', image)
         try {
-            const response = await fetch(`http://localhost:8080/profile/${username}/updateProfilePicture`, {
+            const response = await fetch(`${API}/profile/${username}/updateProfilePicture`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -92,7 +94,7 @@ export default function Profile() {
     const updateUsername = async (newUsername) => {
         console.log('Updating username:', newUsername);
         try {
-            const response = await fetch(`http://localhost:8080/profile/${username}/updateUsername`, {
+            const response = await fetch(`${API}/profile/${username}/updateUsername`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -119,7 +121,7 @@ export default function Profile() {
     const updatePassword = async (newPassword) => {
         console.log('Updating password:', newPassword);
         try {
-            const response = await fetch(`http://localhost:8080/profile/${username}/updatePassword`, {
+            const response = await fetch(`${API}/profile/${username}/updatePassword`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

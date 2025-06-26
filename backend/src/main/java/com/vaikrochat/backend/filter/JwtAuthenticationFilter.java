@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (request.getRequestURI().startsWith("/auth/")
         || request.getRequestURI().startsWith("/ws")
-        || request.getRequestURI().startsWith("/uploads")) {
+        || request.getRequestURI().startsWith("/images")) {
         filterChain.doFilter(request, response);
         return;
     }

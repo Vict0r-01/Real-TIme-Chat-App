@@ -5,14 +5,14 @@ import { Client } from '@stomp/stompjs';
 export function useWebSocket(username, onMessageReceived) {
     const [connected, setConnected] = useState(false);
     const clientRef = useRef(null);
-
+    const API = process.env.BACKEND_API_URL;
     const connect = useCallback(() => {
         if (clientRef.current?.active) {
             console.log('WebSocket already connected');
             return;
         }
 
-        const socket = new SockJS('http://localhost:8080/ws', null, {
+        const socket = new SockJS(`${API}/ws`, null, {
             transportOptions: {
                 websocket: {
                     headers: {
@@ -71,7 +71,7 @@ export function useWebSocket(username, onMessageReceived) {
         }
 
         if(formData.getAll('images') != null || formData.get('text').length > 0) {
-            const response = await fetch(`http://localhost:8080/chat/${chatId}/messages`, {
+            const response = await fetch(`${API}/chat/${chatId}/messages`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,

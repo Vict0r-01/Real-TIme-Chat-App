@@ -39,7 +39,7 @@ public class Image {
     private Set<Message> messages = new HashSet<>();
     
     public Image() {
-        this.url = "/uploads/default.png";
+        this.url = "/images/default.png";
     }
 
     public Image(String fileName, String url, String contentType, Long size) {

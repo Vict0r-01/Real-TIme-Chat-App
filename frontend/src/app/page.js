@@ -30,6 +30,7 @@ export default function Home() {
   const [messageImages, setMessageImages] = useState([]);
   const [messageImagePreviews, setMessageImagePreviews] = useState([]);
   const [chatId, setChatId] = useState(null);
+  const API = process.env.BACKEND_API_URL;
   
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
@@ -73,7 +74,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
   const loadChats = async () => {
     console.log('Loading chats...');
     try {
-      const response = await fetch('http://localhost:8080/chat', {
+      const response = await fetch(`${API}/chat`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
 
     console.log('Loading messages for chat:', chat_Id);
     try{
-      const response = await fetch(`http://localhost:8080/chat/${chat_Id}/messages`, {
+      const response = await fetch(`${API}/chat/${chat_Id}/messages`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +176,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
       if(chatImage instanceof File) {
         formData.append('image', chatImage);
       }
-      const response = await fetch('http://localhost:8080/chat', {
+      const response = await fetch(`${API}/chat`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -199,7 +200,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
 
   const saveFriendChat = async (newParticipants) => {
     try {
-      const response = await fetch('http://localhost:8080/chat/private', {
+      const response = await fetch(`${API}/chat/private`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

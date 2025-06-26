@@ -10,13 +10,13 @@ export default function Login() {
     const [username, setUsername] = useState('');
     const [toastMessage, setToastMessage] = useState('');
     const [showToast, setShowToast] = useState(false);
-
+    const API = process.env.BACKEND_API_URL;
     const router = useRouter();
     //Check Auth
     const loginHandler = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://localhost:8080/auth/login', {
+            const response = await fetch(`${API}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

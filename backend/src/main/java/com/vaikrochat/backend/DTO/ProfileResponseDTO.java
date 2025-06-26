@@ -17,6 +17,6 @@ public class ProfileResponseDTO {
         return new ProfileResponseDTO(
             account.getUsername(),
             account.getPassword(),
-            (account.getProfilePicture() == null) ? "/uploads/default.png" : account.getProfilePicture().getUrl());
+            (account.getProfilePicture() == null) ? "/images/default.png" : account.getProfilePicture().getUrl());
     }
 }
