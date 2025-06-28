@@ -5,7 +5,7 @@ import { Client } from '@stomp/stompjs';
 export function useWebSocket(username, onMessageReceived) {
     const [connected, setConnected] = useState(false);
     const clientRef = useRef(null);
-    const API = process.env.BACKEND_API_URL;
+    const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
     const connect = useCallback(() => {
         if (clientRef.current?.active) {
             console.log('WebSocket already connected');

@@ -21,7 +21,7 @@ export default function Profile() {
     const router = useRouter();
     const params = useParams();
     const { username } = params; // Get username from URL
-    const API = process.env.BACKEND_API_URL;
+    const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
     useEffect(() => {
         if (username) {

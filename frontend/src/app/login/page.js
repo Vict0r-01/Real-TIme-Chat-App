@@ -10,7 +10,7 @@ export default function Login() {
     const [username, setUsername] = useState('');
     const [toastMessage, setToastMessage] = useState('');
     const [showToast, setShowToast] = useState(false);
-    const API = process.env.BACKEND_API_URL;
+    const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
     const router = useRouter();
     //Check Auth
     const loginHandler = async (e) => {
