@@ -30,7 +30,7 @@ export default function Home() {
   const [messageImages, setMessageImages] = useState([]);
   const [messageImagePreviews, setMessageImagePreviews] = useState([]);
   const [chatId, setChatId] = useState(null);
-  const API = process.env.BACKEND_API_URL;
+  const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
   
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
