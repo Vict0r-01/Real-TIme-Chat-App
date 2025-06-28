@@ -4,12 +4,12 @@ const nextConfig = {
       return [
         {
           source: '/login',
-          destination: 'http://localhost:8080/login',
+          destination: `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/login`,
         },
         {
           // WebSocket proxy configuration
           source: '/ws',
-          destination: 'http://localhost:8080/ws',
+          destination: `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/ws`,
         },
       ];
     },
