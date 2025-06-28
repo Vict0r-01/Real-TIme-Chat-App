@@ -73,6 +73,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
 
   const loadChats = async () => {
     console.log('Loading chats...');
+    console.log('API URL:', API);
     try {
       const response = await fetch(`${API}/chat`, {
         method: 'GET',
