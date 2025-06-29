@@ -6,10 +6,6 @@ export function useWebSocket(username, onMessageReceived) {
     const [connected, setConnected] = useState(false);
     const clientRef = useRef(null);
     const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // Remove protocol and slashes from API
-    const apiHost = API.replace(/^https?:\/\//, ''); 
-    const wsUrl = `${wsProtocol}://${apiHost}/ws`;
 
     const connect = useCallback(() => {
         if (clientRef.current?.active) {
@@ -17,7 +13,7 @@ export function useWebSocket(username, onMessageReceived) {
             return;
         }
 
-        const socket = new SockJS(`${wsUrl}/ws`, null, {
+        const socket = new SockJS(`${API}/ws`, null, {
             transportOptions: {
                 websocket: {
                     headers: {
