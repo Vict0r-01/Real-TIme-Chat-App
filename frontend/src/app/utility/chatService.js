@@ -6,13 +6,17 @@ export function useWebSocket(username, onMessageReceived) {
     const [connected, setConnected] = useState(false);
     const clientRef = useRef(null);
     const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const apiHost = API.replace(/^https?/, ''); // Remove protocol from API
+    const wsUrl = `${wsProtocol}:${apiHost}/ws`;
+    
     const connect = useCallback(() => {
         if (clientRef.current?.active) {
             console.log('WebSocket already connected');
             return;
         }
 
-        const socket = new SockJS(`wss://${API}/ws`, null, {
+        const socket = new SockJS(`${wsUrl}/ws`, null, {
             transportOptions: {
                 websocket: {
                     headers: {
