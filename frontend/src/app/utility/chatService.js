@@ -12,7 +12,7 @@ export function useWebSocket(username, onMessageReceived) {
             return;
         }
 
-        const socket = new SockJS(`${API}/ws`, null, {
+        const socket = new SockJS(`wss://${API}/ws`, null, {
             transportOptions: {
                 websocket: {
                     headers: {

@@ -36,8 +36,7 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
             authrorized -> authrorized.requestMatchers("/auth/**").permitAll()
-            .requestMatchers("/ws/**", "/ws/info/**", "/topic/**", "/app/**").permitAll()  // Allow all WebSocket endpoints
-            .requestMatchers("/uploads/**").permitAll()
+            .requestMatchers("/ws/**", "/ws/info/**", "/topic/**", "/app/**").permitAll()
             .anyRequest().authenticated());
 
             return http.build();
@@ -45,7 +44,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList(System.getenv("FRONTEND_URL")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
