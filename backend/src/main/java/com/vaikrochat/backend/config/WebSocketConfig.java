@@ -13,7 +13,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(System.getenv("FRONTEND_URL"))
+                .setAllowedOrigins("https://vaikrochat.net",
+                        "https://www.vaikrochat.net",
+                        "http://localhost:3000")
                 .withSockJS();
     }
 

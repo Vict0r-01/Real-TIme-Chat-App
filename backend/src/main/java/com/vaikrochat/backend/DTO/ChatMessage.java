@@ -30,7 +30,7 @@ public class ChatMessage {
 
     String profilePictureUrl = (message.getSender() != null && message.getSender().getProfilePicture() != null)
         ? message.getSender().getProfilePicture().getUrl()
-        : "/uploads/default.png";
+        : "/images/default.png";
 
     return new ChatMessage(
         message.getText(),

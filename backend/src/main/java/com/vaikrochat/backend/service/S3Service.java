@@ -29,6 +29,7 @@ public class S3Service {
 
     public void uploadFile(MultipartFile file) throws IOException {
         String key = "images/" + file.getOriginalFilename();
+        System.out.println("UPLOADING FILE~!!!!!");
         s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(bucketName)
@@ -40,21 +41,30 @@ public class S3Service {
     }
 
     public String createPresignedGetUrl(String keyName) {
+        System.out.println("Getting Presigned URL for key: " + keyName);
+        System.out.println("Bucket name: " + bucketName);
+        
         try (S3Presigner presigner = S3Presigner.create()) {
-
             GetObjectRequest objectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(keyName)
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(10))  // The URL will expire in 10 minutes.
+                    .signatureDuration(Duration.ofMinutes(10))
                     .getObjectRequest(objectRequest)
                     .build();
 
             PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
-
-            return presignedRequest.url().toExternalForm();
+            String url = presignedRequest.url().toExternalForm();
+            
+            System.out.println("Generated presigned URL: " + url);
+            return url;
+            
+        } catch (Exception e) {
+            System.err.println("Error creating presigned URL: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create presigned URL", e);
         }
     }
 }

@@ -16,7 +16,7 @@ export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogo
         ☰
       </button>
       
-      <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-800 ring-1 ring-black ring-opacity-5
+      <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-800 ring-1 ring-black ring-opacity-5 z-50
         transform transition-all duration-200 origin-top-right
         ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
         <div className="py-1" role="menu">
