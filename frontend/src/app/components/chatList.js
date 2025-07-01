@@ -9,7 +9,6 @@ const areEqual = (prevProps, nextProps) => {
 };
 
 const ChatList = memo(({ chatBoxes, onChatSelect }) => {
-  console.log('Rendering ChatList with chatBoxes:', chatBoxes);
   return (
     <div className="flex flex-col border-2 border-yellow-300 rounded-lg m-2 w-1/3">
       {chatBoxes.length > 0 ? (

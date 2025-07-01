@@ -34,7 +34,7 @@ export default function Home() {
   
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
-    console.log('------------------Adding chat box--------------------');
+    console.log('------------------Adding Chat--------------------');
     setChatBoxes(prev => [...prev, {
       name: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).username || chat.name 
@@ -73,7 +73,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
 
   const loadChats = async () => {
     console.log('Loading chats...');
-    console.log('API URL:', API);
     try {
       const response = await fetch(`${API}/chat`, {
         method: 'GET',
@@ -90,7 +89,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
           setShowToast(true);
           return;
         }
-        console.log('Parsed chat data:', data);
+        //console.log('Parsed chat data:', data);
         const formattedChats = data.map(chat => ({
           id: chat.id,
           name: chat.type === 'PRIVATE' 
@@ -132,7 +131,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
   // Load messages for a specific chat
   const loadMessages = async (chat_Id) => {
 
-    console.log('Loading messages for chat:', chat_Id);
+    console.log('-------------------Loading Messages--------------------');
     try{
       const response = await fetch(`${API}/chat/${chat_Id}/messages`, {
         method: 'GET',
@@ -154,7 +153,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
           timestamp: message.timestamp,
           profilePicture: message.profilePictureUrl
         }));
-        console.log('Parsed message data:', formattedMessages);
+        //console.log('Parsed message data:', formattedMessages);
         setMessages(prev => new Map(prev).set(chat_Id, formattedMessages));
       }
     }catch (error) {
@@ -215,7 +214,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
       });
       if (response.ok) {
         const data = await response.json();
-        console.log('Friend chat data:', data);
         addChatBox(data);
         setFriendModalOpen(false);
         setFriendName('');
@@ -264,8 +262,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
     const formData = new FormData();
     if(messageText.trim()) formData.append('text', messageText);
     else formData.append('text', '');
-    if(messageImages) {
-      console.log('Appending single image');
+    if(messageImages.length > 0) {
       messageImages.forEach((image) => formData.append('images', image));}
 
     sendMessage(chatId, formData);

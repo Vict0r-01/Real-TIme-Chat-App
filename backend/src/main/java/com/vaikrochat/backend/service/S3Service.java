@@ -27,8 +27,7 @@ public class S3Service {
         .build();
     }
 
-    public void uploadFile(MultipartFile file) throws IOException {
-        String key = "images/" + file.getOriginalFilename();
+    public void uploadFile(MultipartFile file, String key) throws IOException {
         System.out.println("UPLOADING FILE~!!!!!");
         s3Client.putObject(
                 PutObjectRequest.builder()
