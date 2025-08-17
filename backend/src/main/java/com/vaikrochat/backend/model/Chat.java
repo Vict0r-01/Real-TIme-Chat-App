@@ -93,6 +93,9 @@ public class Chat {
         this.participants = participants;
     }
 
+    public Set<Account> getRawParticipants(){
+        return this.participants;
+    }
     public Set<ParticipantDTO> getParticipants() {
         return this.participants.stream().map(
             account -> new ParticipantDTO(account.getId(), 

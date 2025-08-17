@@ -4,10 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vaikrochat.backend.DTO.ChatUpdateDTO;
+import com.vaikrochat.backend.DTO.ChatUpdateDTO.updateType;
 import com.vaikrochat.backend.model.Account;
 import com.vaikrochat.backend.model.Chat;
 import com.vaikrochat.backend.model.Image;
@@ -24,11 +27,21 @@ public class ChatService {
     private final ChatRepo chatRepo;
     private final AccountRepository accountRepository;
     private final ImageService imageService;
+    private final SimpMessagingTemplate messagingTemplate;
     
-    public ChatService(ChatRepo chatRepo, AccountRepository accountRepository, ImageService imageService) {
+    public ChatService(ChatRepo chatRepo, AccountRepository accountRepository, ImageService imageService, SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
         this.imageService = imageService;
         this.accountRepository = accountRepository;
         this.chatRepo = chatRepo;
+    }
+
+    public void sendChatUpdate(Chat chat, updateType message){
+        for(Account participants : chat.getRawParticipants()){
+            System.out.println("Sending Chat Update to: " + participants.getUsername());
+            ChatUpdateDTO chatUpdateMessage = new ChatUpdateDTO(message, chat.getId());
+            messagingTemplate.convertAndSend("/topic/user/" + participants.getUsername() + "/chats", chatUpdateMessage);
+        };
     }
 
     public Chat getChatById(int chatId) {
@@ -92,7 +105,9 @@ public class ChatService {
         newChat.setRawParticipants(participants);
 
         System.out.println("Saving chat with name: " + newChat.getName());
-        return chatRepo.save(newChat);
+        chatRepo.save(newChat);
+        sendChatUpdate(newChat, updateType.CHAT_CREATED);
+        return newChat;
     }
     
     public void deleteChat(int chatId) {

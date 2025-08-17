@@ -10,16 +10,16 @@ const areEqual = (prevProps, nextProps) => {
 
 const ChatList = memo(({ chatBoxes, onChatSelect }) => {
   return (
-    <div className="flex flex-col border-2 border-yellow-300 rounded-lg m-2 w-1/3">
+    <div id='chatList' className="flex flex-col border-2 border-yellow-300 rounded-lg m-2 w-1/3">
       {chatBoxes.length > 0 ? (
       <ul>
         {chatBoxes.map((chat, index) => (
-          <li 
+          <li
             key={chat.id || `chat-${index}`} 
             className="m-2 hover:bg-gray-100 group transition duration-300 ease-in-out rounded-lg"
             onClick={() => onChatSelect(chat.id)}
           >
-            <ChatBox name={chat.name} image={chat.image} />
+            <ChatBox name={chat.name} image={chat.image} index={index} />
           </li>
         ))}
       </ul>

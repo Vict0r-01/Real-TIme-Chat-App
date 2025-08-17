@@ -28,7 +28,7 @@ public class AuthController {
         // Validate the login request (username and password)
         Account account = accountService.login(loginRequest);
         if(account == null) {
-            System.out.println("Invalid username or password");
+            System.out.println("Invalid username or password, " + loginRequest.getUsername());
             return ResponseEntity.status(401).body("Invalid username or password");
         }
         // If valid, generate a JWT token

@@ -24,6 +24,7 @@ public class Image {
     @Column
     private String contentType;
 
+    @Column
     private Long size;
 
     @Column
@@ -38,6 +39,9 @@ public class Image {
     @ManyToMany(mappedBy = "images")
     private Set<Message> messages = new HashSet<>();
     
+    @ManyToMany(mappedBy = "userImageCollection")
+    private Set<Account> accountImageCollections = new HashSet<>();
+
     public Image() {
         this.url = "/images/default.png";
     }

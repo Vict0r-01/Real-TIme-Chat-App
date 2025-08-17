@@ -3,6 +3,7 @@ package com.vaikrochat.backend.service;
 import java.io.IOException;
 import java.time.Duration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,13 +19,14 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 @Service
 public class S3Service {
     private final S3Client s3Client;
-    private final String bucketName = "vaikrobucket";
+    private final String bucketName;
 
-    public S3Service() {
+    public S3Service(@Value("${aws.s3BucketName}") String bucketName) {
         this.s3Client = S3Client.builder()
         .region(Region.US_EAST_2)
-        .credentialsProvider(DefaultCredentialsProvider.create())
+        .credentialsProvider(DefaultCredentialsProvider.builder().build())
         .build();
+        this.bucketName = bucketName;
     }
 
     public void uploadFile(MultipartFile file, String key) throws IOException {
@@ -43,7 +45,11 @@ public class S3Service {
         System.out.println("Getting Presigned URL for key: " + keyName);
         System.out.println("Bucket name: " + bucketName);
         
-        try (S3Presigner presigner = S3Presigner.create()) {
+        try (S3Presigner presigner = S3Presigner.builder()
+            .region(Region.US_EAST_2)
+            .credentialsProvider(DefaultCredentialsProvider.builder().build())
+            .build()) {
+
             GetObjectRequest objectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(keyName)

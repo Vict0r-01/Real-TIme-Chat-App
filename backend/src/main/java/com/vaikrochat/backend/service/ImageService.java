@@ -26,7 +26,7 @@ public class ImageService {
     }
     public Image storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(UUID.randomUUID() + "-" + file.getOriginalFilename());
-        String fileKey = "/images/"+fileName;
+        String fileKey = "images/"+fileName;
         try {
             // Save file to S3 bucket
             s3Service.uploadFile(file, fileKey);
@@ -37,7 +37,7 @@ public class ImageService {
             // Save metadata to database
             Image image = new Image();
             image.setFileName(fileName);
-            image.setUrl(fileKey);
+            image.setUrl("/"+fileKey);
             image.setContentType(file.getContentType());
             image.setSize(file.getSize());
             image.setUploadDate(LocalDateTime.now());

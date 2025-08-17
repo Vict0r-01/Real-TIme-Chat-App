@@ -81,4 +81,26 @@ public class AccountService {
         System.out.println("Updated password: " + account.getPassword());
         accountRepository.save(account);
     }
+
+    public void addImagetoCollection(MultipartFile image){
+
+        Image addedImage = imageService.storeFile(image);
+        if (image == null) {
+            throw new RuntimeException("Failed to store profile picture");
+        }
+        Account account = getCurrentUser();
+        account.getUserImageCollection().add(addedImage);
+        System.out.println(addedImage.getFileName()+" added to the COLLECTION!");
+
+    }
+
+    public Image getImagefromCollection(long imageId){
+        System.out.println("Image Id: -----"+imageId);
+        Account account = getCurrentUser();
+        Optional<Image> image = account.getUserImageCollection().stream().filter(img -> img.getId() == imageId).findFirst();
+        if(image.isPresent()){
+            Image foundImage = image.get();
+            return foundImage;
+        } else throw new RuntimeException("Image in Collection not Found!");
+    }
 }

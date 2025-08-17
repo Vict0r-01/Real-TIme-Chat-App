@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
-export function useWebSocket(username, onMessageReceived) {
+export function useWebSocket(username, onMessageReceived, onChatUpdate) {
     const [connected, setConnected] = useState(false);
     const clientRef = useRef(null);
     const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
@@ -17,7 +17,7 @@ export function useWebSocket(username, onMessageReceived) {
             transportOptions: {
                 websocket: {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                     }
                 }
             }
@@ -28,15 +28,19 @@ export function useWebSocket(username, onMessageReceived) {
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
              connectHeaders: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
             },
             onConnect: () => {
                 console.log('Connected to WebSocket');
                 setConnected(true);
                 
-                client.subscribe(`/topic/chat`, (message) => {
+                client.subscribe(`/topic/message`, (message) => {
                     const newMessage = JSON.parse(message.body);
                     onMessageReceived(newMessage);
+                });
+                client.subscribe(`/topic/user/${username}/chats`, (message) => {
+                    console.log('Chat update received');
+                    onChatUpdate(JSON.parse(message.body));
                 });
             },
             onDisconnect: () => {
@@ -71,11 +75,15 @@ export function useWebSocket(username, onMessageReceived) {
             return;
         }
 
-        if(formData.getAll('images') != null || formData.get('text').length > 0) {
+        const hasText = (formData.get('text') ?? '').toString().length > 0;
+        const hasImages = (formData.getAll('images') ?? []).length > 0;
+        const hasCollected = (formData.getAll('collectedImages') ?? []).length > 0;
+
+        if(hasImages | hasText | hasCollected) {
             const response = await fetch(`${API}/chat/${chatId}/messages`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
                 },
                 body: formData
             })
@@ -90,7 +98,7 @@ export function useWebSocket(username, onMessageReceived) {
             }
         } else return;
         
-    }, [username, connect]);
+    }, [connect]);
 
     return { connected, sendMessage };
 }

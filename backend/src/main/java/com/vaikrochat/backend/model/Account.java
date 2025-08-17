@@ -43,6 +43,9 @@ public class Account  {
     )
     private Set<Chat> chats = new HashSet<>();
     
+    @ManyToMany
+    Set<Image> userImageCollection = new HashSet<>();
+
     public Account() {
         // Default constructor
     }

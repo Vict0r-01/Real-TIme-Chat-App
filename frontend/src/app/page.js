@@ -11,27 +11,33 @@ import DropdownMenu from './components/dropdownMenu';
 import FriendModal from './components/friendModal';
 import Toast from './components/toast';
 import ParticipantSelect from './components/participantSelect';
+import DemoWalkthrough from './components/demoMode';
+
 export default function Home() {
   const router = useRouter();
   const [isChatModalOpen, setChatModalOpen] = useState(false);
   const [isFriendModalOpen, setFriendModalOpen] = useState(false);
   const [chatBoxes, setChatBoxes] = useState([]);
   const [messages, setMessages] = useState(new Map());
-  const {username, setUsername, logout} = useAuth();
+  const {username, setUsername, logout, isDemoMode} = useAuth();
   const [messageText, setMessageText] = useState('');
   const [chatName, setChatName] = useState('');
   const [participants, setParticipants] = useState([]);
   const [chatImage, setChatImage] = useState(null);
-  const [chatImagePreview, setChatImagePreview] = useState('https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y');
+  const [chatImagePreview, setChatImagePreview] = useState('');
   const [friendName, setFriendName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const memoizedChatBoxes = useMemo(() => chatBoxes, [chatBoxes]);
   const [messageImages, setMessageImages] = useState([]);
   const [messageImagePreviews, setMessageImagePreviews] = useState([]);
+  const [messageCollectedImages, setMessageCollectedImages] = useState([]);
   const [chatId, setChatId] = useState(null);
+  const demoRef = useRef();
+
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
   
+
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
     console.log('------------------Adding Chat--------------------');
@@ -48,25 +54,40 @@ export default function Home() {
 
   //Add Message
   const addMessageRef = useRef();
-addMessageRef.current = (message) => {
-  setMessages(prevMap => {
-      const newMap = new Map(prevMap);
-      const currentMessages = newMap.get(chatId) || [];
-      const newMessages = [...currentMessages, {
-          sender: message.sender,
-          content: message.text,
-          imageUrls: message.imageUrls || [],
-          timestamp: message.timestamp || new Date().toISOString(),
-          profilePicture: message.profilePictureUrl
-      }];
-      newMap.set(chatId, newMessages);
-      return newMap;
-  });
-};
+
+  addMessageRef.current = (message) => {
+    setMessages(prevMap => {
+        const newMap = new Map(prevMap);
+        const currentMessages = newMap.get(chatId) || [];
+        const newMessages = [...currentMessages, {
+            sender: message.sender,
+            content: message.text,
+            imageUrls: message.imageUrls || [],
+            timestamp: message.timestamp || new Date().toISOString(),
+            profilePicture: message.profilePictureUrl
+        }];
+        newMap.set(chatId, newMessages);
+        return newMap;
+    });
+  };
 
 const stableAddMessage = useCallback((msg) => addMessageRef.current(msg), []);
-const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
+const onChatUpdate = (message) => {
+  console.log('Chat update received:', message);
+  if(message.updateType === 'CHAT_DELETED') {
+    setMessages(prevMap => {
+      const newMap = new Map(prevMap);
+      newMap.delete(message.chatId);
+      return newMap;
+    });
+    setChatId(null);
+  }
+  loadChats();
+}
+// Use WebSocket
+const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onChatUpdate);
 
+//-------------------useEffects---------------------
   useEffect(() => {
     loadChats();
   }, [username]);
@@ -78,7 +99,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
         },
       });
       
@@ -137,7 +158,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
         }
       });
       // Debug raw response
@@ -179,7 +200,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
       const response = await fetch(`${API}/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
         },
         body: formData
       });
@@ -204,7 +225,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           name: 'Private Chat',
@@ -217,6 +238,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         addChatBox(data);
         setFriendModalOpen(false);
         setFriendName('');
+        demoRef.current?.advanceJoyrideStep();
         await loadChats();
       } else if (response.status === 409) {
         setToastMessage('Friend Chat already exist');
@@ -236,6 +258,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
     setMessageImagePreviews([]);
     setMessageImages([]);
     setMessageText('');
+    demoRef.current?.advanceJoyrideStep();
     if(selectedChatId === chatId || messages.has(selectedChatId)) return;
     loadMessages(selectedChatId);
 }, [chatId, messages]);
@@ -254,18 +277,27 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
   const handleHideToast = useCallback(() => {
     setShowToast(false);
   }, []);
-  // Handle message submission
+
+  // -----------------------Handle message submission------------------------
   const handleMessageSubmit = useCallback((e) => {
     e.preventDefault();
     if (!messageText.trim() && messageImages.length === 0) return;
 
     const formData = new FormData();
+    //Checking if there Text
     if(messageText.trim()) formData.append('text', messageText);
     else formData.append('text', '');
+    //Checking if there are Uploaded Images
     if(messageImages.length > 0) {
-      messageImages.forEach((image) => formData.append('images', image));}
+      messageImages.forEach((image) => formData.append('images', image));
+    }
+    //Checking if there are Collected Images
+    if(messageCollectedImages.length > 0) {
+      messageCollectedImages.forEach((imageId) => formData.append('collectedImages', String(imageId)));
+    }
 
     sendMessage(chatId, formData);
+    setMessageCollectedImages([]);
     setMessageText('');
     setMessageImages([]);
     setMessageImagePreviews(prev => {
@@ -273,8 +305,20 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         prev.forEach(url => URL.revokeObjectURL(url));
         return [];
     });
-    e.target.querySelector('input[type="file"]').value = '';
+    if(this) e.target.querySelector('input[type="file"]').value = '';
   }, [messageText, sendMessage, messageImages, messageImagePreviews]);
+
+  const handleDemoMessageSubmit = useCallback((demoText = '', demoImageId = []) => {
+    const formData = new FormData();
+
+    formData.append('text', demoText);
+
+    if(demoImageId.length > 0) {
+      demoImageId.forEach((id) => formData.append('collectedImages', String(id)));
+    }
+
+    sendMessage(chatId, formData);
+  }, [sendMessage, chatId]);
 
   // Handle chat submission
   const handleChatSubmit = useCallback((e) => {
@@ -285,8 +329,13 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
       setShowToast(true);
       return;
     }
-    saveChat();
-  }, [chatName, participants, saveChat, username]);
+    if(!isDemoMode)
+      saveChat();
+    else {
+      setToastMessage('Group Chat creation is disabled in Demo Mode');
+      setShowToast(true);
+    }
+  }, [chatName, participants, saveChat]);
 
   // Handle friend submission
   const handleFriendSubmit = useCallback((e) => {
@@ -324,8 +373,8 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
         setShowToast(true);
         return;
     }
-    if (files.some(file => file.size > 2 * 1024 * 1024)) { // 2MB limit
-        setToastMessage('One or more images exceed the 2MB size limit');
+    if (files.some(file => file.size > 5 * 1024 * 1024)) { // 5MB limit
+        setToastMessage('One or more images exceed the 5MB size limit');
         setShowToast(true);
         return;
     }
@@ -339,11 +388,48 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
     }
   }, [messageImagePreviews]);
 
+  const handlePaste = async (e) => {
+    try{
+      const items = e.clipboardData.items;
+      for(const item of items) {
+        if(item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if(file && file.size <= 5 * 1024 * 1024) { // 5MB limit
+            setMessageImages(prev => [...prev, file]);
+            const previewUrl = URL.createObjectURL(file);
+            setMessageImagePreviews(prev => [...prev, previewUrl]);
+          } else {
+            setToastMessage('Invalid File');
+            setShowToast(true);
+          }
+        }
+      }
+    }catch (error) {
+      console.error('Error handling paste:', error);
+      setToastMessage('Error handling paste');
+      setShowToast(true);
+    }
+  }
+
   return (
     <div className="h-screen flex flex-col">
       <Toast message={toastMessage} show={showToast} onHide={handleHideToast} />
+      {isDemoMode && 
+      <div>
+        <DemoWalkthrough ref={demoRef} />
+        <button 
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-50 font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-2 border-yellow-300 p-2 rounded-lg"
+          onClick={() => {
+            setToastMessage('Reset Demo Mode');
+            setShowToast(true);
+            if(demoRef.current)
+              demoRef.current.resetDemo();
+          }}>Reset Demo</button>
+      </div>
+      }
       <div className="flex items-center p-2">
-        <h1 className="text-3xl font-bold text-yellow-300">VaikroChat</h1>
+        <h1 id="title" className="text-3xl font-bold text-yellow-300">VaikroChat</h1>
+        
         <div className="flex justify-end w-full">
           <DropdownMenu
             onProfile={() => router.push('/profile/' + username)}
@@ -351,9 +437,10 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
             onAddFriend={() => setFriendModalOpen(true)}
             onLogout={() => {
               logout();
-              // setAuth(false);
               router.push('/login');
             }}
+            advanceJoyrideStep={demoRef.current ? demoRef.current.advanceJoyrideStep : null}
+            stepIndex={demoRef.current ? demoRef.current.stepIndex : null}
           />
           <ChatModal isOpen={isChatModalOpen} onClose={() => setChatModalOpen(false)}>
             <form onSubmit={handleChatSubmit} className="flex flex-col">
@@ -437,13 +524,30 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
                 ))}
               </div>
             )}
-          <form className='flex items-center p-2 w-full' onSubmit={handleMessageSubmit}>
+          {isDemoMode && chatId != null && 
+          <div className="text-yellow-300 italic mb-2">Demo Mode: You can send messages to yourself!
+          <button
+            className={`${styles.button} ml-2`}
+            onClick={() => {
+              handleDemoMessageSubmit("This is a demo message!");
+            }}
+            >Send Text</button>
+            <button
+            className={`${styles.button} ml-2`}
+            onClick={() => {
+              handleDemoMessageSubmit(undefined, [1]);
+            }}
+            >Send Image</button>
+          </div>}
+          {!isDemoMode && (
+            <form className='flex items-center p-2 w-full' onSubmit={handleMessageSubmit}>
             
             <input 
               className={`${styles.input} w-full`}
               type="text"
               value={messageText}
               onChange={handleMessageChange}
+              onPaste={handlePaste}
               placeholder="Type a message..."
             />
             <input className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} 
@@ -456,6 +560,8 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage);
             <button className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;
             </button>
           </form>
+          )}
+          
         </div>
       </div>
     </div>

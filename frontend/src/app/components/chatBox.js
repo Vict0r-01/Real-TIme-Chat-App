@@ -1,6 +1,6 @@
 import React from 'react';
 import { getImageUrl } from '../config/imageUrl';
-    const ChatBox = ({ name, image }) => {
+    const ChatBox = ({ name, image}) => {
 
         return (
             <div className="flex">

@@ -9,7 +9,7 @@ import Toast from "@/app/components/toast";
 import { ApiError } from "next/dist/server/api-utils";
 
 export default function Profile() {
-    const { username: currentUser, setUsername: setCurrentUser, setProfileImage } = useAuth();
+    const { username: currentUser, setUsername: setCurrentUser, setProfileImage, isDemoMode } = useAuth();
     const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [allowEdit, setAllowEdit] = useState(false);
@@ -37,7 +37,7 @@ export default function Profile() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
             });
             if (response.ok) {
@@ -71,7 +71,7 @@ export default function Profile() {
             const response = await fetch(`${API}/profile/${username}/updateProfilePicture`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
                 body: formData
             });
@@ -98,7 +98,7 @@ export default function Profile() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
                 body: JSON.stringify({ newUsername })
             });
@@ -125,7 +125,7 @@ export default function Profile() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
                 body: JSON.stringify({ newPassword })
             });
@@ -151,6 +151,7 @@ export default function Profile() {
   };
     const handleEditProfile = () => {
         setAllowEdit(true);
+        console.log('DEMO MODE: '+isDemoMode);
     };
 
     const handleImageClick = () => {
@@ -169,7 +170,7 @@ export default function Profile() {
                             onClick={() => router.back()}>
                             &#x2190;
                         </button>
-                        {currentUser === username && (
+                        {(currentUser === username) && (
                                 <button 
                                     className={styles.button}
                                     onClick={handleEditProfile}
@@ -210,7 +211,7 @@ export default function Profile() {
                     )}
                     {(currentUser === username) && (
                         <>
-                            <h2 className="text-xl font-semibold">{`Password: ${userData.password}`}</h2>
+                            <h2 className="text-xl font-semibold">Password: ********</h2>
                             {allowEdit && (
                                 <div className="flex flex-col mt-2">
                                     <input 
@@ -235,7 +236,20 @@ export default function Profile() {
                                 }}>
                                     Cancel
                                 </button>
-                            <button 
+                            {isDemoMode ? (
+                                <button 
+                                    className={styles.button}
+                                    onClick={() => {
+                                        setToastMessage('Cannot change details in Demo Mode!');
+                                        setShowToast(true);
+                                        setUserData({ ...userData, username: usernameDisplay ,password: passwordDisplay });
+                                        setAllowEdit(false);
+                                    }}
+                                >
+                                    Save Demo
+                                </button>
+                        ) : (
+                                <button 
                                     className={styles.button}
                                     onClick={async () => {
                                         let usernameChanged = userData.username !== usernameDisplay;
@@ -249,13 +263,14 @@ export default function Profile() {
 
                                         setAllowEdit(false);
                                         if(usernameChanged || passwordChanged) {
-                                            localStorage.removeItem('token');
+                                            sessionStorage.removeItem('token');
                                             router.push('/login');
                                         }
                                     }}
                                 >
                                     Save Changes
                             </button>
+                            )}
                         </div>
                             )}
                     </div>

@@ -76,6 +76,7 @@ public class AccountController {
         }
     }
 
+
     record PasswordRequest(String newPassword) {}
     record UsernameRequest(String newUsername) {}
 }

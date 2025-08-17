@@ -2,13 +2,18 @@
 import { useState } from 'react';
 import { styles } from '../styles/style';
 
-export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogout }) {
+export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogout, advanceJoyrideStep, stepIndex }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        id='dropdown'
+        onClick={() => {setIsOpen(!isOpen)
+          if (typeof advanceJoyrideStep === 'function' && stepIndex === 0)
+            // Call the function to advance the Joyride step
+            advanceJoyrideStep();
+        }}
         className={`${styles.button} flex items-center transition-transform duration-200 ${
           isOpen ? 'rotate-90' : ''
         }`}
@@ -16,7 +21,7 @@ export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogo
         ☰
       </button>
       
-      <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-800 ring-1 ring-black ring-opacity-5 z-50
+      <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-800 ring-1 ring-black ring-opacity-5 z-5
         transform transition-all duration-200 origin-top-right
         ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
         <div className="py-1" role="menu">
@@ -39,6 +44,7 @@ export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogo
             Add Chat
           </button>
           <button
+            id='friendModal'
             className="w-full text-left px-4 py-2 text-sm text-yellow-300 hover:bg-zinc-700 transition-colors duration-150"
             onClick={() => {
               onAddFriend();
