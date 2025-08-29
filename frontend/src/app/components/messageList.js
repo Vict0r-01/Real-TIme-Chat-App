@@ -14,8 +14,9 @@ const MessageList = memo(({ messages}) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
   return (
-    <div className="flex-1 overflow-y-auto border-2 border-yellow-300 rounded-lg h-[calc(100vh-100px)] w-full mb-2 transition-opacity duration-500">
+    <div className="flex-1 overflow-y-auto scrollbar-hidden w-full mb-2 transition-opacity duration-500">
       {messages.map((message, index) => (
         <div key={`${message.id}-${index}`} 
              className={`flex items-start m-2 ${message?.sender === username ? 'flex-row-reverse' : 'flex-row'}`}>

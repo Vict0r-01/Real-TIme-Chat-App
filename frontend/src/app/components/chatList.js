@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import ChatBox from './chatBox';
+import { useState } from 'react';
 
 const areEqual = (prevProps, nextProps) => {
   return (
@@ -8,18 +9,25 @@ const areEqual = (prevProps, nextProps) => {
   );
 };
 
+
 const ChatList = memo(({ chatBoxes, onChatSelect }) => {
+  const[selectedChatId, setSelectedChatId] = useState(null);
   return (
     <div id='chatList' className="flex flex-col border-2 border-yellow-300 rounded-lg m-2 w-1/3">
-      {chatBoxes.length > 0 ? (
+      {chatBoxes.size > 0 ? (
       <ul>
-        {chatBoxes.map((chat, index) => (
+        {[...chatBoxes].map(([key, value]) =>
+        (
           <li
-            key={chat.id || `chat-${index}`} 
-            className="m-2 hover:bg-gray-100 group transition duration-300 ease-in-out rounded-lg"
-            onClick={() => onChatSelect(chat.id)}
+            key={key} 
+            className={`m-2 hover:bg-gray-100 group transition duration-300 ease-in-out rounded-lg ${selectedChatId === key ? ' bg-gray-100' : ''}`}
+            onClick={() => {
+              onChatSelect(key)
+              setSelectedChatId(key);
+              }
+            }
           >
-            <ChatBox name={chat.name} image={chat.image} index={index} />
+            <ChatBox name={value.name} image={value.image} chatId={value.id ?? key} selectedChatId={selectedChatId} />
           </li>
         ))}
       </ul>

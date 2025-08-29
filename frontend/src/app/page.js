@@ -12,27 +12,29 @@ import FriendModal from './components/friendModal';
 import Toast from './components/toast';
 import ParticipantSelect from './components/participantSelect';
 import DemoWalkthrough from './components/demoMode';
+import ChatInfo from './components/chatInfo';
+import { useChat } from './context/chatContext';
 
 export default function Home() {
   const router = useRouter();
   const [isChatModalOpen, setChatModalOpen] = useState(false);
   const [isFriendModalOpen, setFriendModalOpen] = useState(false);
-  const [chatBoxes, setChatBoxes] = useState([]);
   const [messages, setMessages] = useState(new Map());
   const {username, setUsername, logout, isDemoMode} = useAuth();
   const [messageText, setMessageText] = useState('');
   const [chatName, setChatName] = useState('');
   const [participants, setParticipants] = useState([]);
   const [chatImage, setChatImage] = useState(null);
-  const [chatImagePreview, setChatImagePreview] = useState('');
+  const [chatImagePreview, setChatImagePreview] = useState(null);
   const [friendName, setFriendName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const memoizedChatBoxes = useMemo(() => chatBoxes, [chatBoxes]);
   const [messageImages, setMessageImages] = useState([]);
   const [messageImagePreviews, setMessageImagePreviews] = useState([]);
   const [messageCollectedImages, setMessageCollectedImages] = useState([]);
   const [chatId, setChatId] = useState(null);
+  const { chatBoxes, setAndPersistChatBoxes} = useChat();
+  const memoizedChatBoxes = useMemo(() => chatBoxes, [chatBoxes]);
   const demoRef = useRef();
 
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
@@ -41,7 +43,10 @@ export default function Home() {
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
     console.log('------------------Adding Chat--------------------');
-    setChatBoxes(prev => [...prev, {
+    setAndPersistChatBoxes(prev => {
+      const newMap = new Map(prev);
+      const currentChatBoxes = newMap.get(chat.id) || [];
+      const newChatBoxes = [...currentChatBoxes, {
       name: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).username || chat.name 
             : chat.name,
@@ -49,7 +54,10 @@ export default function Home() {
       image: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).profileImageUrl || chat.imageUrl 
             : chat.imageUrl
-    }]);
+    }];
+      newMap.set(chat.id, newChatBoxes);
+      return newMap;
+  });
   }, [username]);
 
   //Add Message
@@ -58,7 +66,7 @@ export default function Home() {
   addMessageRef.current = (message) => {
     setMessages(prevMap => {
         const newMap = new Map(prevMap);
-        const currentMessages = newMap.get(chatId) || [];
+        const currentMessages = newMap.get(message.chatId) || [];
         const newMessages = [...currentMessages, {
             sender: message.sender,
             content: message.text,
@@ -66,7 +74,7 @@ export default function Home() {
             timestamp: message.timestamp || new Date().toISOString(),
             profilePicture: message.profilePictureUrl
         }];
-        newMap.set(chatId, newMessages);
+        newMap.set(message.chatId, newMessages);
         return newMap;
     });
   };
@@ -110,8 +118,10 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
           setShowToast(true);
           return;
         }
-        //console.log('Parsed chat data:', data);
-        const formattedChats = data.map(chat => ({
+        
+        const formattedChatBoxes = new Map();
+        data.map(chat => (
+        formattedChatBoxes.set(chat.id, {
           id: chat.id,
           name: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).username || chat.name 
@@ -119,9 +129,13 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
           type: chat.type,
           image: chat.type === 'PRIVATE' 
             ? chat.participants.find(p => p.username !== username).profileImageUrl || chat.imageUrl 
-            : chat.imageUrl
-        }));
-        setChatBoxes(formattedChats);
+            : chat.imageUrl,
+          participants: chat.participants.map(p => ({ name: p.username, image: p.profileImageUrl })),
+        }))
+      );
+      console.log('Formatted chat boxes:', formattedChatBoxes);
+      setAndPersistChatBoxes(new Map(formattedChatBoxes));
+
 
       } else {
         //Error handling
@@ -427,7 +441,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
           }}>Reset Demo</button>
       </div>
       }
-      <div className="flex items-center p-2">
+      <div className="flex items-center pt-2 pl-2 pr-2">
         <h1 id="title" className="text-3xl font-bold text-yellow-300">VaikroChat</h1>
         
         <div className="flex justify-end w-full">
@@ -506,10 +520,14 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
       </div>
         
       
-      <div className="flex h-[calc(100vh-73px)] border-2">
+      <div className="flex h-[calc(100vh-60px)]">
         <ChatList chatBoxes={memoizedChatBoxes} onChatSelect={handleChatSelect} />
         
-        <div className={`flex flex-col mt-2 mr-2 mb-2 w-full ${chatId == null ? 'hidden' : ''}`}>
+        <div className={`flex flex-col mt-2 mr-2 mb-2 border-2 border-yellow-300 rounded-lg w-full ${chatId == null ? 'hidden' : ''}`}>
+          <div className="flex p-2 border-b-2 border-yellow-300 w-full hover:bg-gray-200 group cursor-pointer"
+          onClick={() => router.push('/chat/' + chatId)}>
+            {chatId && <ChatInfo chat={memoizedChatBoxes.get(chatId)}/>}
+          </div>
           <MessageList key={chatId} messages={messages.get(chatId) || []}/>
           
           {messageImagePreviews.length > 0 && (
@@ -540,24 +558,30 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
             >Send Image</button>
           </div>}
           {!isDemoMode && (
-            <form className='flex items-center p-2 w-full' onSubmit={handleMessageSubmit}>
+            <form className='flex items-center w-auto border-1 border-yellow-300 m-1 rounded-full' onSubmit={handleMessageSubmit}>
             
             <input 
-              className={`${styles.input} w-full`}
+              className={`w-full p-2 focus:outline-none rounded-full`}
               type="text"
               value={messageText}
               onChange={handleMessageChange}
               onPaste={handlePaste}
               placeholder="Type a message..."
             />
-            <input className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} 
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleMessageImageChange}
-            disabled={chatId == null}
-            />
-            <button className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-1 border-yellow-300 p-2 m-1 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;
+            <label htmlFor='uploadFile' className={`text-xl text-yellow-300 hover:bg-yellow-300 hover:text-black p-4 m-1 rounded-full cursor-pointer ${chatId == null ? 'hidden' : ''}`}>
+              <input
+              className='hidden'
+              id='uploadFile' 
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleMessageImageChange}
+              disabled={chatId == null}
+              />
+              &#128206;
+            </label>
+            
+            <button className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black p-4 m-1 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;
             </button>
           </form>
           )}
