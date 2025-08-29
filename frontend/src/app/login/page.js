@@ -65,7 +65,6 @@ export default function Login() {
                 (username === 'testuser1' || username === 'testuser2') ?
                     login(data.token, data.account.username, data.account.profilePictureUrl, true) :
                     login(data.token, data.account.username, data.account.profilePictureUrl);
-                console.log('Login successful:', data);
                 router.push('/');
             } else {
                 setToastMessage('Login failed. Please check your credentials.');

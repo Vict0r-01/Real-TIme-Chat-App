@@ -9,7 +9,7 @@ export function useWebSocket(username, onMessageReceived, onChatUpdate) {
 
     const connect = useCallback(() => {
         if (clientRef.current?.active) {
-            console.log('WebSocket already connected');
+            // console.log('WebSocket already connected');
             return;
         }
 
@@ -31,7 +31,7 @@ export function useWebSocket(username, onMessageReceived, onChatUpdate) {
             'Authorization': `Bearer ${sessionStorage.getItem('token')}`
             },
             onConnect: () => {
-                console.log('Connected to WebSocket');
+                // console.log('Connected to WebSocket');
                 setConnected(true);
                 
                 client.subscribe(`/topic/message`, (message) => {
@@ -39,12 +39,12 @@ export function useWebSocket(username, onMessageReceived, onChatUpdate) {
                     onMessageReceived(newMessage);
                 });
                 client.subscribe(`/topic/user/${username}/chats`, (message) => {
-                    console.log('Chat update received');
+                    // console.log('Chat update received');
                     onChatUpdate(JSON.parse(message.body));
                 });
             },
             onDisconnect: () => {
-                console.log('Disconnected from WebSocket');
+                // console.log('Disconnected from WebSocket');
                 setConnected(false);
             },
             onError: (error) => {
@@ -70,7 +70,7 @@ export function useWebSocket(username, onMessageReceived, onChatUpdate) {
     const sendMessage = useCallback( async (chatId, formData) => {
         
         if (!clientRef.current?.active) {
-            console.log('Reconnecting WebSocket...');
+            // console.log('Reconnecting WebSocket...');
             connect();
             return;
         }
@@ -89,7 +89,7 @@ export function useWebSocket(username, onMessageReceived, onChatUpdate) {
             })
             
             if(response.ok) {
-                console.log('Message sent successfully');
+                // console.log('Message sent successfully');
                 const data = await response.json();
                 clientRef.current.publish({
                     destination: `/app/chat.sendMessage`,

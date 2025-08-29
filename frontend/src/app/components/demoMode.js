@@ -94,7 +94,6 @@ const sendMessageSteps = [
     }
 
     console.groupCollapsed(type);
-    console.log(data); //eslint-disable-line no-console
     console.groupEnd();
   };
 

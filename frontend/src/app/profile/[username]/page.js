@@ -42,7 +42,6 @@ export default function Profile() {
             });
             if (response.ok) {
                 const data = await response.json();
-                console.log('User data:', data);
                 setUserData(data);
                 setUsernameDisplay(data.username);
                 setPasswordDisplay(data.password);
@@ -92,7 +91,6 @@ export default function Profile() {
     };
 
     const updateUsername = async (newUsername) => {
-        console.log('Updating username:', newUsername);
         try {
             const response = await fetch(`${API}/profile/${username}/updateUsername`, {
                 method: 'PUT',
@@ -119,7 +117,6 @@ export default function Profile() {
     };
 
     const updatePassword = async (newPassword) => {
-        console.log('Updating password:', newPassword);
         try {
             const response = await fetch(`${API}/profile/${username}/updatePassword`, {
                 method: 'PUT',
@@ -151,7 +148,6 @@ export default function Profile() {
   };
     const handleEditProfile = () => {
         setAllowEdit(true);
-        console.log('DEMO MODE: '+isDemoMode);
     };
 
     const handleImageClick = () => {

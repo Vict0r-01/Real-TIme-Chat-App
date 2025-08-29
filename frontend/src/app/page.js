@@ -42,7 +42,6 @@ export default function Home() {
 
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
-    console.log('------------------Adding Chat--------------------');
     setAndPersistChatBoxes(prev => {
       const newMap = new Map(prev);
       const currentChatBoxes = newMap.get(chat.id) || [];
@@ -81,7 +80,6 @@ export default function Home() {
 
 const stableAddMessage = useCallback((msg) => addMessageRef.current(msg), []);
 const onChatUpdate = (message) => {
-  console.log('Chat update received:', message);
   if(message.updateType === 'CHAT_DELETED') {
     setMessages(prevMap => {
       const newMap = new Map(prevMap);
@@ -101,7 +99,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
   }, [username]);
 
   const loadChats = async () => {
-    console.log('Loading chats...');
     try {
       const response = await fetch(`${API}/chat`, {
         method: 'GET',
@@ -133,7 +130,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
           participants: chat.participants.map(p => ({ name: p.username, image: p.profileImageUrl })),
         }))
       );
-      console.log('Formatted chat boxes:', formattedChatBoxes);
       setAndPersistChatBoxes(new Map(formattedChatBoxes));
 
 
@@ -166,7 +162,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
   // Load messages for a specific chat
   const loadMessages = async (chat_Id) => {
 
-    console.log('-------------------Loading Messages--------------------');
     try{
       const response = await fetch(`${API}/chat/${chat_Id}/messages`, {
         method: 'GET',
@@ -188,7 +183,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
           timestamp: message.timestamp,
           profilePicture: message.profilePictureUrl
         }));
-        //console.log('Parsed message data:', formattedMessages);
         setMessages(prev => new Map(prev).set(chat_Id, formattedMessages));
       }
     }catch (error) {
