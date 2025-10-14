@@ -12,6 +12,8 @@ public class ChatUpdateDTO {
     public enum updateType {
         CHAT_CREATED,
         CHAT_DELETED,
-        CHAT_UPDATED
+        CHAT_UPDATED,
+        CHAT_PARTICIPANT_DELETED,
+        CHAT_PARTICIPANT_ADDED
     }
 }

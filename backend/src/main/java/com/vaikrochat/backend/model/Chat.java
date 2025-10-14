@@ -89,6 +89,10 @@ public class Chat {
         this.participants.add(account);
     }
 
+    public void removeParticipant(Account account) {
+        if(this.participants.remove(account)) System.out.println("Removed for good");
+    }
+
     public void setRawParticipants(Set<Account> participants) {
         this.participants = participants;
     }

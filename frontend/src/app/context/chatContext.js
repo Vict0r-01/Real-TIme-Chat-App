@@ -15,8 +15,30 @@ export function ChatProvider({ children }) {
     sessionStorage.setItem('chatBoxes', JSON.stringify(Array.from(newChatBoxes.entries())));
   };
 
+  const removeParticipant = (chatId, participantName) => {
+    const chatBox = chatBoxes.get(chatId);
+    if (chatBox) {
+      const updatedParticipants = chatBox.participants.filter(p => p.name !== participantName);
+      const updatedChatBox = { ...chatBox, participants: updatedParticipants };
+      const newChatBoxes = new Map(chatBoxes);
+      newChatBoxes.set(chatId, updatedChatBox);
+      setAndPersistChatBoxes(newChatBoxes);
+    }
+  };
+
+  const addParticipant = (chatId, participant) => {
+    const chatBox = chatBoxes.get(chatId);
+    if (chatBox) {
+      const updatedParticipants = [...chatBox.participants, participant];
+      const updatedChatBox = { ...chatBox, participants: updatedParticipants };
+      const newChatBoxes = new Map(chatBoxes);
+      newChatBoxes.set(chatId, updatedChatBox);
+      setAndPersistChatBoxes(newChatBoxes);
+    }
+  };
+
   return (
-    <ChatContext.Provider value={{ chatBoxes, setAndPersistChatBoxes }}>
+    <ChatContext.Provider value={{ chatBoxes, setAndPersistChatBoxes, removeParticipant, addParticipant }}>
       {children}
     </ChatContext.Provider>
   );

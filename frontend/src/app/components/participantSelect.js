@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { getImageUrl } from '../config/imageUrl';
-const ParticipantSelect = ({ chatBoxes, username, onSelectionChange }) => {
+import { useChat } from '../context/chatContext';
+const ParticipantSelect = ({ onSelectionChange, exclude }) => {
     const [selectedParticipants, setSelectedParticipants] = useState([]);
+    const { chatBoxes } = useChat();
 
     //Extra participant from private chats
-    const participants = chatBoxes.filter(chat => chat.type === 'PRIVATE')
+    const participants = Array.from(chatBoxes.values()).filter(chat => chat.type === 'PRIVATE' && !exclude.some(ex => ex.name === chat.name))
     .map(chat => ({
         username: chat.name,
         image: chat.image

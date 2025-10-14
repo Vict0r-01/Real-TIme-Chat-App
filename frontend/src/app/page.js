@@ -466,8 +466,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
                 />
                 <label className="block text-base font-bold mb-1 mt-1">Participants</label>
                 <ParticipantSelect
-                  chatBoxes={chatBoxes}
-                  username={username}
                   onSelectionChange={(selectedParticipants) => {
                     setParticipants(selectedParticipants);
                   }}
@@ -518,8 +516,8 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
         <ChatList chatBoxes={memoizedChatBoxes} onChatSelect={handleChatSelect} />
         
         <div className={`flex flex-col mt-2 mr-2 mb-2 border-2 border-yellow-300 rounded-lg w-full ${chatId == null ? 'hidden' : ''}`}>
-          <div className="flex p-2 border-b-2 border-yellow-300 w-full hover:bg-gray-200 group cursor-pointer"
-          onClick={() => router.push('/chat/' + chatId)}>
+          <div className="flex p-2 border-b-2 border-yellow-300 w-full hover:bg-gray-200 group cursor-pointer transition-colors duration-200"
+          onClick={() => {if(memoizedChatBoxes.get(chatId).type != 'PRIVATE' && !isDemoMode)router.push('/chat/' + chatId)}}>
             {chatId && <ChatInfo chat={memoizedChatBoxes.get(chatId)}/>}
           </div>
           <MessageList key={chatId} messages={messages.get(chatId) || []}/>

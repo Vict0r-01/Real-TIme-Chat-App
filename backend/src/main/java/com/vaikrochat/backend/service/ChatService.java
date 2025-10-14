@@ -113,4 +113,20 @@ public class ChatService {
     public void deleteChat(int chatId) {
         chatRepo.deleteById(chatId);
     }
+
+    public void deleteParticipant(Chat chat, Account participant){
+        chat.removeParticipant(participant);
+        participant.getChats().remove(chat);
+        System.out.println("Deleting: " + participant.getUsername() + " from " + chat.getId());
+        chatRepo.save(chat); // Persist the change
+        sendChatUpdate(chat, updateType.CHAT_PARTICIPANT_DELETED); // Notify via websocket
+    }
+
+    public void addParticipants(Chat chat, Set<Account> participants){
+        participants.forEach(participant -> {
+            chat.addParticipant(participant);
+            participant.addChat(chat);
+        });
+        sendChatUpdate(chat,updateType.CHAT_PARTICIPANT_ADDED);
+    }
 }
