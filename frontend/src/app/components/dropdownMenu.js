@@ -1,18 +1,21 @@
 'use client';
 import { useState } from 'react';
 import { styles } from '../styles/style';
+import { useDemo } from '../context/demoContext';
 
-export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogout, advanceJoyrideStep, stepIndex }) {
+export default function DropdownMenu({ onProfile, onAddChat, onAddFriend, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { stepIndex, advanceJoyrideStep } = useDemo();
 
   return (
     <div className="relative">
       <button
         id='dropdown'
         onClick={() => {setIsOpen(!isOpen)
-          if (typeof advanceJoyrideStep === 'function' && stepIndex === 0)
+          if (typeof advanceJoyrideStep === 'function' && stepIndex == 0) {
             // Call the function to advance the Joyride step
             advanceJoyrideStep();
+          }
         }}
         className={`${styles.button} flex items-center transition-transform duration-200 ${
           isOpen ? 'rotate-90' : ''

@@ -1,5 +1,6 @@
 import { AuthProvider } from "./context/authContext";
 import { ChatProvider } from "./context/chatContext";
+import { DemoProvider } from "./context/demoContext";
 import "./globals.css";
 import {Inter} from "next/font/google";
 export const metadata = {
@@ -18,9 +19,11 @@ export default function RootLayout({ children }) {
         className={inter.className}
       >
         <AuthProvider>
-          <ChatProvider>
-            {children}
-          </ChatProvider>
+          <DemoProvider>
+            <ChatProvider>
+              {children}
+            </ChatProvider>
+          </DemoProvider>
         </AuthProvider>
       </body>
     </html>

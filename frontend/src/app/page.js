@@ -14,6 +14,7 @@ import ParticipantSelect from './components/participantSelect';
 import DemoWalkthrough from './components/demoMode';
 import ChatInfo from './components/chatInfo';
 import { useChat } from './context/chatContext';
+import { useDemo } from './context/demoContext';
 
 export default function Home() {
   const router = useRouter();
@@ -35,29 +36,30 @@ export default function Home() {
   const [chatId, setChatId] = useState(null);
   const { chatBoxes, setAndPersistChatBoxes} = useChat();
   const memoizedChatBoxes = useMemo(() => chatBoxes, [chatBoxes]);
-  const demoRef = useRef();
+  const { advanceJoyrideStep, resetDemo, stepIndex } = useDemo();
 
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
   
 
   //Add ChatBox
   const addChatBox = useCallback((chat) => {
-    setAndPersistChatBoxes(prev => {
-      const newMap = new Map(prev);
-      const currentChatBoxes = newMap.get(chat.id) || [];
-      const newChatBoxes = [...currentChatBoxes, {
-      name: chat.type === 'PRIVATE' 
-            ? chat.participants.find(p => p.username !== username).username || chat.name 
-            : chat.name,
-      type: chat.type,
-      image: chat.type === 'PRIVATE' 
-            ? chat.participants.find(p => p.username !== username).profileImageUrl || chat.imageUrl 
-            : chat.imageUrl
-    }];
-      newMap.set(chat.id, newChatBoxes);
-      return newMap;
-  });
-  }, [username]);
+    const newMap = new Map(chatBoxes);
+    const newChatBoxes = {
+    id: chat.id,
+    name: chat.type === 'PRIVATE' 
+          ? chat.participants.find(p => p.username !== username).username || chat.name 
+          : chat.name,
+    type: chat.type,
+    image: chat.type === 'PRIVATE' 
+          ? chat.participants.find(p => p.username !== username).profileImageUrl || chat.imageUrl 
+          : chat.imageUrl
+  };
+    newMap.set(chat.id, newChatBoxes);
+    setAndPersistChatBoxes(newMap);
+    
+    console.log(newMap);
+    return newMap;
+  }, [username, setAndPersistChatBoxes, chatBoxes]);
 
   //Add Message
   const addMessageRef = useRef();
@@ -222,7 +224,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
         setShowToast(true);
       }
     } catch (error) {
-      setToastMessage('Error creating chat');
+      setToastMessage('Error creating chat: ' + error);
       setShowToast(true);
     }
   }
@@ -246,7 +248,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
         addChatBox(data);
         setFriendModalOpen(false);
         setFriendName('');
-        demoRef.current?.advanceJoyrideStep();
+        if(isDemoMode && stepIndex === 1) advanceJoyrideStep();
         await loadChats();
       } else if (response.status === 409) {
         setToastMessage('Friend Chat already exist');
@@ -257,6 +259,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
       }
     } catch (error) {
       setToastMessage('Error creating chat');
+      console.log(error);
       setShowToast(true);
     }
   }
@@ -266,7 +269,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
     setMessageImagePreviews([]);
     setMessageImages([]);
     setMessageText('');
-    demoRef.current?.advanceJoyrideStep();
     if(selectedChatId === chatId || messages.has(selectedChatId)) return;
     loadMessages(selectedChatId);
 }, [chatId, messages]);
@@ -351,6 +353,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
     if (!friendName.trim()) return;
     const newParticipant = [username, friendName];
     saveFriendChat(newParticipant);
+    setFriendModalOpen(false);
   }, [friendName, username, saveFriendChat]);
 
   // Update your image change handler
@@ -424,14 +427,13 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
       <Toast message={toastMessage} show={showToast} onHide={handleHideToast} />
       {isDemoMode && 
       <div>
-        <DemoWalkthrough ref={demoRef} />
+        <DemoWalkthrough />
         <button 
           className="absolute top-4 left-1/2 -translate-x-1/2 z-50 font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-2 border-yellow-300 p-2 rounded-lg"
           onClick={() => {
             setToastMessage('Reset Demo Mode');
             setShowToast(true);
-            if(demoRef.current)
-              demoRef.current.resetDemo();
+            resetDemo();
           }}>Reset Demo</button>
       </div>
       }
@@ -447,8 +449,6 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
               logout();
               router.push('/login');
             }}
-            advanceJoyrideStep={demoRef.current ? demoRef.current.advanceJoyrideStep : null}
-            stepIndex={demoRef.current ? demoRef.current.stepIndex : null}
           />
           <ChatModal isOpen={isChatModalOpen} onClose={() => setChatModalOpen(false)}>
             <form onSubmit={handleChatSubmit} className="flex flex-col">
