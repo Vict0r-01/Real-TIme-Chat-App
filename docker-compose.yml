@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8.3
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${USER_PASS}
+    ports:
+      - "3306:3306"
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${USER_PASS}
+      - BUCKET_NAME=${BUCKET_NAME}
+    depends_on:
+      - db
+  frontend:
+    container_name: frontend
+    image: node:22
+    build:
+      context: ./frontend
+      target: dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_API_URL=${NEXT_PUBLIC_BACKEND_API_URL}
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
