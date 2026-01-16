@@ -13,27 +13,23 @@ const areEqual = (prevProps, nextProps) => {
 const ChatList = memo(({ chatBoxes, onChatSelect }) => {
   const[selectedChatId, setSelectedChatId] = useState(null);
   return (
-    <div id='chatList' className="flex flex-col border-2 border-yellow-300 rounded-lg m-2 w-1/3">
+    <div id='chatList' className="card m-2 p-2 w-1/3 shadow-card">
       {chatBoxes.size > 0 ? (
-      <ul>
+      <ul className="space-y-2">
         {[...chatBoxes].map(([key, value]) =>
         (
           <li
             key={key} 
-            className={`m-2 hover:bg-gray-100 group transition duration-300 ease-in-out rounded-lg ${selectedChatId === key ? ' bg-gray-100' : ''}`}
-            onClick={() => {
-              onChatSelect(key)
-              setSelectedChatId(key);
-              }
-            }
+            className={`cursor-pointer transition duration-200 ease-in-out rounded-lg ${selectedChatId === key ? 'selected-chat' : 'hover:bg-yellow-300/5'}`}
+            onClick={() => { onChatSelect(key); setSelectedChatId(key); }}
           >
             <ChatBox name={value.name} image={value.image} chatId={value.id ?? key} selectedChatId={selectedChatId} />
           </li>
         ))}
       </ul>
       ): (
-        <div className="flex items-center justify-center h-full w-full">
-          <p className="text-gray-500">No chats available</p>
+        <div className="flex items-center justify-center h-32 w-full">
+          <p className="text-muted">No chats available</p>
         </div>
       )}
     </div>

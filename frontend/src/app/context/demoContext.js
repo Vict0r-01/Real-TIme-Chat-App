@@ -82,7 +82,7 @@ const sendMessageSteps = [
       await resetState();
       setStep(addFriendsteps);
     } else if(index === 1) {
-      await fetch(`${API}/demo/seed?username=${username}&type=friend`, {
+      await fetch(`${API}/demo/seed?username=testuser1&type=friend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

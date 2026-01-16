@@ -423,33 +423,22 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen w-full flex flex-col">
       <Toast message={toastMessage} show={showToast} onHide={handleHideToast} />
-      {isDemoMode && 
-      <div>
-        <DemoWalkthrough />
-        <button 
-          className="absolute top-4 left-1/2 -translate-x-1/2 z-50 font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black border-2 border-yellow-300 p-2 rounded-lg"
-          onClick={() => {
-            setToastMessage('Reset Demo Mode');
-            setShowToast(true);
-            resetDemo();
-          }}>Reset Demo</button>
-      </div>
-      }
-      <div className="flex items-center pt-2 pl-2 pr-2">
-        <h1 id="title" className="text-3xl font-bold text-yellow-300">VaikroChat</h1>
-        
-        <div className="flex justify-end w-full">
-          <DropdownMenu
-            onProfile={() => router.push('/profile/' + username)}
-            onAddChat={() => setChatModalOpen(true)}
-            onAddFriend={() => setFriendModalOpen(true)}
-            onLogout={() => {
-              logout();
-              router.push('/login');
-            }}
-          />
+      {isDemoMode && (
+        <div>
+          <DemoWalkthrough />
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+            <button className={`${styles.buttonOutline} px-3 py-2`} onClick={() => { setToastMessage('Reset Demo Mode'); setShowToast(true); resetDemo(); }}>Reset Demo</button>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full flex items-center justify-between p-4">
+        <h1 id="title" className="text-xl md:text-3xl font-bold text-accent">VaikroChat</h1>
+        <div className="flex-1" />
+        <div className="flex items-center gap-3">
+          <DropdownMenu onProfile={() => router.push('/profile/' + username)} onAddChat={() => setChatModalOpen(true)} onAddFriend={() => setFriendModalOpen(true)} onLogout={() => { logout(); router.push('/login'); }} />
           <ChatModal isOpen={isChatModalOpen} onClose={() => setChatModalOpen(false)}>
             <form onSubmit={handleChatSubmit} className="flex flex-col">
               <div>
@@ -477,7 +466,7 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
                   accept="image/*"
                   onChange={handleImageChange}
                 />
-                <img className="items-center justify-center w-50 h-50 p-2 border border-yellow-300 rounded-full" src={chatImagePreview} alt="Preview" />
+                <img className="items-center justify-center w-48 h-48 p-2 border border-yellow-300 rounded-full object-cover" src={chatImagePreview} alt="Preview" />
                 <button
                   className={`${styles.button} mt-4`}
                   type="submit">
@@ -500,11 +489,10 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
                   value={friendName}
                   onChange={handleFriendNameChange}
                 />
-                <button
-                  className={`${styles.button}`}
-                  type="submit">
-                  Confirm
-                </button>
+                <div className="flex gap-2 mt-3">
+                  <button className={`${styles.button}`} type="submit">Confirm</button>
+                  <button type="button" className={`${styles.button} btn-outline`} onClick={() => setFriendModalOpen(false)}>Cancel</button>
+                </div>
               </div>
             </form>
           </FriendModal>
@@ -515,25 +503,19 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
       <div className="flex h-[calc(100vh-60px)]">
         <ChatList chatBoxes={memoizedChatBoxes} onChatSelect={handleChatSelect} />
         
-        <div className={`flex flex-col mt-2 mr-2 mb-2 border-2 border-yellow-300 rounded-lg w-full ${chatId == null ? 'hidden' : ''}`}>
-          <div className="flex p-2 border-b-2 border-yellow-300 w-full hover:bg-gray-200 group cursor-pointer transition-colors duration-200"
-          onClick={() => {if(memoizedChatBoxes.get(chatId).type != 'PRIVATE' && !isDemoMode)router.push('/chat/' + chatId)}}>
-            {chatId && <ChatInfo chat={memoizedChatBoxes.get(chatId)}/>}
+        <div className={`flex flex-col mt-2 mr-2 mb-2 card w-full shadow-card ${chatId == null ? 'hidden' : ''}`}>
+          <div className="flex items-center p-3 border-b border-yellow-300 w-full cursor-pointer hover:bg-panel/30 transition-colors duration-200" onClick={() => { if (memoizedChatBoxes.get(chatId).type != 'PRIVATE' && !isDemoMode) router.push('/chat/' + chatId); }}>
+            {chatId && <ChatInfo chat={memoizedChatBoxes.get(chatId)} />}
           </div>
-          <MessageList key={chatId} messages={messages.get(chatId) || []}/>
+          <MessageList key={chatId} messages={messages.get(chatId) || []} />
           
           {messageImagePreviews.length > 0 && (
-              <div className='flex flex-wrap gap-2 mb-2'>
-                {messageImagePreviews.map((preview, index) => (
-                  <img 
-                    key={index} 
-                    src={preview} 
-                    alt={`Preview ${index + 1}`} 
-                    className='w-20 h-20 object-cover rounded-lg border border-yellow-300'
-                  />
-                ))}
-              </div>
-            )}
+            <div className='flex flex-wrap gap-2 mb-2 p-2'>
+              {messageImagePreviews.map((preview, index) => (
+                <img key={index} src={preview} alt={`Preview ${index + 1}`} className='w-20 h-20 object-cover rounded-lg border border-yellow-300 shadow-sm' />
+              ))}
+            </div>
+          )}
           {isDemoMode && chatId != null && 
           <div className="text-yellow-300 italic mb-2">Demo Mode: You can send messages to yourself!
           <button
@@ -550,32 +532,14 @@ const { connected, sendMessage } = useWebSocket(username, stableAddMessage, onCh
             >Send Image</button>
           </div>}
           {!isDemoMode && (
-            <form className='flex items-center w-auto border-1 border-yellow-300 m-1 rounded-full' onSubmit={handleMessageSubmit}>
-            
-            <input 
-              className={`w-full p-2 focus:outline-none rounded-full`}
-              type="text"
-              value={messageText}
-              onChange={handleMessageChange}
-              onPaste={handlePaste}
-              placeholder="Type a message..."
-            />
-            <label htmlFor='uploadFile' className={`text-xl text-yellow-300 hover:bg-yellow-300 hover:text-black p-4 m-1 rounded-full cursor-pointer ${chatId == null ? 'hidden' : ''}`}>
-              <input
-              className='hidden'
-              id='uploadFile' 
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleMessageImageChange}
-              disabled={chatId == null}
-              />
-              &#128206;
-            </label>
-            
-            <button className={`font-bold text-yellow-300 hover:bg-yellow-300 hover:text-black p-4 m-1 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;
-            </button>
-          </form>
+            <form className='flex items-center gap-2 w-auto m-2' onSubmit={handleMessageSubmit}>
+              <input className={`${styles.input} flex-1 rounded-full`} type="text" value={messageText} onChange={handleMessageChange} onPaste={handlePaste} placeholder="Type a message..." />
+              <label htmlFor='uploadFile' className={`${styles.buttonOutline} p-3 rounded-full ${chatId == null ? 'hidden' : ''}`}>
+                <input className='hidden' id='uploadFile' type="file" accept="image/*" multiple onChange={handleMessageImageChange} disabled={chatId == null} />
+                &#128206;
+              </label>
+              <button className={`${styles.button} p-3 rounded-full`} type="submit" disabled={chatId == null}>&#x2191;</button>
+            </form>
           )}
           
         </div>

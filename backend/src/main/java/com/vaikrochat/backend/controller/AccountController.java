@@ -1,12 +1,14 @@
 package com.vaikrochat.backend.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -70,6 +72,17 @@ public class AccountController {
 
             System.out.println("New Password: " + newPassword.newPassword());
             accountService.updatePassword(account, newPassword.newPassword());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build(); // Internal server error
+        }
+    }
+    @PostMapping("profile/addImgToCollection")
+    public ResponseEntity<Void> addImageToCollection(@RequestPart(value = "images", required = false) List<MultipartFile> images){
+        try{
+            for (MultipartFile image : images) {
+                accountService.addImagetoCollection(image);
+            }
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(500).build(); // Internal server error

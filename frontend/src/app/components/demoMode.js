@@ -49,109 +49,39 @@ const DemoWalkthrough = () => {
  
 
   return (
-    (username === 'testuser2') ? (
-      <div>
-        <Joyride callback={handleJoyrideCallback} run={run} hideCloseButton hideBackButton disableOverlay stepIndex={stepIndex} steps={step} styles={
-          {
-            options: {
-              backgroundColor: '#1e293b',
-              overlayColor: 'rgba(0, 0, 0, 0.5)',
-              primaryColor: '#facc15',
-              textColor: '#facc15',
-              zIndex: 1000
-            }
-          }
-        }/>
-        {!removeStartingStep && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-        >
-          <div className={`flex flex-col items-center bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-700 
-          rounded-2xl border-4 border-yellow-400 shadow-2xl p-8 w-full max-w-md mx-4 
-          relative transition-all duration-500 ease-out ${hideStartingStep ? 'translate-x-100 opacity-0 z-0' : ''}`}
-          onTransitionEnd={handleTransitionEnd}>
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-300 text-zinc-900 px-6 py-2 rounded-full shadow-lg font-bold text-lg border-2 border-yellow-400">
+    <div>
+      <Joyride callback={handleJoyrideCallback} run={run} hideCloseButton hideBackButton disableOverlay stepIndex={stepIndex} steps={step} styles={{ options: { overlayColor: 'rgba(0, 0, 0, 0.5)', primaryColor: 'var(--accent)', textColor: 'rgb(0, 0, 0)', zIndex: 1000 }}} />
+
+      {!removeStartingStep && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className={`w-full max-w-md mx-4 card p-6 relative transition-all duration-500 ease-out ${hideStartingStep ? 'translate-x-8 opacity-0 z-0' : ''}`} onTransitionEnd={handleTransitionEnd}>
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-accent text-black px-5 py-2 rounded-full shadow-lg font-bold text-lg">
               🚀 Demo Mode
             </div>
-            <h2 className="text-2xl font-extrabold mb-3 text-yellow-300 mt-8 text-center drop-shadow-lg">Welcome to Demo Mode!</h2>
-            <p className="mb-3 text-zinc-200 text-center">
-              Explore the website's features without creating an account.<br/>
-              <span className="text-yellow-200 text-center italic mb-6">Be sure to check the other tab!</span>
-            </p>
-            <ul className="mb-5 text-zinc-300 text-left w-full list-disc pl-6 space-y-1">
+            <h2 className="text-2xl font-extrabold mt-3 mb-3 text-accent text-center">Welcome to Demo Mode!</h2>
+            <p className="mb-3 text-muted text-center">Explore the website's features without creating an account.</p>
+            <ul className="mb-5 text-muted text-left w-full list-disc pl-6 space-y-1">
               <li>Send and receive real-time messages!</li>
               <li>Share images!</li>
             </ul>
-            <div className="flex-1 flex items-center justify-center w-full">
-              <p className="text-yellow-200 text-center italic mb-6">
-                Click <span className="font-semibold text-yellow-300">Start</span> to begin the guided walkthrough!
-              </p>
-            </div>
-            <button
-              className={`${styles.button} w-full py-3 text-lg shadow-md transition`}
-              onClick={handleClickStart}
-            >
-              Start Walkthrough
-            </button>
+            <p className="text-secondary text-center italic mb-4">Click <span className="font-semibold text-accent">Start</span> to begin the guided walkthrough!</p>
+            <button className={`${styles.button} w-full py-3 text-lg`} onClick={handleClickStart}>Start Walkthrough</button>
           </div>
         </div>
-        )}
-        {showSteps && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-49">
-            <div className="flex flex-col items-center bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-700 
-          rounded-2xl border-4 border-yellow-400 shadow-2xl p-8 w-full max-w-md mx-4 
-          relative">
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-300 text-zinc-900 px-6 py-2 rounded-full shadow-lg font-bold text-lg border-2 border-yellow-400">
-              🚀 Choose
-            </div>
-            <button
-              className={`${styles.button} px-6 py-3 text-lg shadow-md transition`}
-              onClick={() => handleSelectStep(0)}
-            > Add a Friend
-            </button>
-            <button
-              className={`${styles.button} px-6 py-3 text-lg shadow-md transition`}
-              onClick={() => handleSelectStep(1)}
-            > Send a Text or Image
-            </button>
+      )}
+
+      {showSteps && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="w-full max-w-md mx-4 card p-6 relative">
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-accent text-black px-5 py-2 rounded-full shadow-lg font-bold text-lg">🚀 Choose</div>
+            <div className="flex flex-col gap-3 mt-6">
+              <button className={`${styles.button} px-6 py-3 text-lg`} onClick={() => handleSelectStep(0)}>Add a Friend</button>
+              <button className={`${styles.button} px-6 py-3 text-lg`} onClick={() => handleSelectStep(1)}>Send a Text or Image</button>
             </div>
           </div>
-        )}
-      </div>
-    ) : (
-      <div>
-        {!removeStartingStep && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-          >
-            <div className={`flex flex-col items-center bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-700 
-            rounded-2xl border-4 border-yellow-400 shadow-2xl p-8 w-full max-w-md mx-4 
-            relative transition-all duration-500 ease-out ${hideStartingStep ? 'translate-x-100 opacity-0 z-0' : ''}`}
-            onTransitionEnd={handleTransitionEnd}>
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-300 text-zinc-900 px-6 py-2 rounded-full shadow-lg font-bold text-lg border-2 border-yellow-400">
-                🚀 Demo Mode
-              </div>
-              <h2 className="text-2xl font-extrabold mb-3 text-yellow-300 mt-8 text-center drop-shadow-lg">Welcome to Demo Mode!</h2>
-              <p className="mb-3 text-zinc-200 text-center">
-                Explore the website's features without creating an account.
-              </p>
-              <p className='mb-3 text-zinc-200 text-center'>
-                This is the second account, so you can test sending messages to yourself.
-              </p>
-              <div className="flex-1 flex items-center justify-center w-full">
-                <p className="text-yellow-200 text-center italic mb-6">
-                  Click <span className="font-semibold text-yellow-300">Start</span> to begin!
-                </p>
-              </div>
-              <button
-                className={`${styles.button} w-full py-3 text-lg shadow-md transition`}
-                onClick={handleClickStart}
-              >
-                Let's Begin!
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    )
+        </div>
+      )}
+    </div>
   );
 };
 

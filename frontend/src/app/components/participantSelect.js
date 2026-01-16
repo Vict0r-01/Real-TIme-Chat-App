@@ -7,7 +7,7 @@ const ParticipantSelect = ({ onSelectionChange, exclude }) => {
     const { chatBoxes } = useChat();
 
     //Extra participant from private chats
-    const participants = Array.from(chatBoxes.values()).filter(chat => chat.type === 'PRIVATE' && !exclude.some(ex => ex.name === chat.name))
+    const participants = Array.from(chatBoxes.values()).filter(chat => chat.type === 'PRIVATE')
     .map(chat => ({
         username: chat.name,
         image: chat.image
@@ -30,18 +30,14 @@ const ParticipantSelect = ({ onSelectionChange, exclude }) => {
                 <div
                     key={participant.username}
                     onClick={() => handleSelectParticipant(participant.username)}
-                    className={`flex items-center p-2 rounded-lg cursor-pointer mb-1
-                    ${selectedParticipants.includes(participant.username)
-                        ? 'bg-yellow-300/20 border border-yellow-300'
-                        : 'hover:bg-zinc-700'
-                    }`}
+                    className={`flex items-center p-2 rounded-lg cursor-pointer mb-1 transition-colors duration-150 ${selectedParticipants.includes(participant.username) ? 'selected-chat' : 'hover:bg-panel'}`}
                 >
                     <img
                     src={getImageUrl(participant.image)}
                     alt={participant.username}
                     className='w-8 h-8 rounded-full mr-2'
                     />
-                    <span className='text-sm'>{participant.username}</span>           
+                    <span className='text-sm'>{participant.username}</span>
                 </div>
             ))}
         </div>

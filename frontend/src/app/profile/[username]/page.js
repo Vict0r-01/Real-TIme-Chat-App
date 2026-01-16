@@ -17,6 +17,7 @@ export default function Profile() {
     const [passwordDisplay, setPasswordDisplay] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [showToast, setShowToast] = useState(false);
+    const [imgCollection, setImgCollection] = useState([]);
     const fileInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
@@ -140,6 +141,25 @@ export default function Profile() {
         }
     };
 
+    const addImgToCollection = async (images) => {
+        try {
+            const response = await fetch(`${API}/profile/addImgToCollection`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: images
+            });
+            if (response.ok) {
+                console.log("Added img to collection!")
+            } else {
+                setToastMessage('Failed to add image to the collection');
+                setShowToast(true);
+            }
+        } catch (error) {
+            setToastMessage('Error adding image!');
+        }
+    };
     const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file instanceof File) {
@@ -155,124 +175,98 @@ export default function Profile() {
             fileInputRef.current?.click();
         }
     };
+    const handleImgToCollection = (e) => {
+        const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+        if (files.length === 0) {
+            setToastMessage('Please select valid image files');
+            setShowToast(true);
+            return;
+        }
+        if (files.some(file => file.size > 5 * 1024 * 1024)) { // 5MB limit
+            setToastMessage('One or more images exceed the 5MB size limit');
+            setShowToast(true);
+            return;
+        }
+        setImgCollection(prev => [...prev, ...files]);
+    }
+
+    const submitImgToCollection = (e) => {
+        e.preventDefault();
+        console.log('submitting img')
+        const formData = new FormData();
+        imgCollection.forEach((image) => formData.append('images', image));
+        addImgToCollection(formData);
+    }
     return (
-        <div className="container mx-auto p-2">
+        <div className="p-4 flex justify-center">
             <Toast message={toastMessage} show={showToast} onHide={() => setShowToast(false)} />
             {userData ? (
-                <div className="flex flex-col items-center">
+                <div className="w-full max-w-2xl card p-6">
                     <div className="flex items-center justify-between mb-4 w-full">
-                        <button
-                            className= {`${styles.button} pt-1 pb-1 pr-4 pl-4 text-xl`}
-                            onClick={() => router.back()}>
-                            &#x2190;
-                        </button>
+                        <button className={`${styles.button} text-lg`} onClick={() => router.back()}>&#x2190;</button>
                         {(currentUser === username) && (
-                                <button 
-                                    className={styles.button}
-                                    onClick={handleEditProfile}
-                                >
-                                    Edit Profile
-                                </button>
+                                <button className={styles.button} onClick={handleEditProfile}>Edit Profile</button>
                         )}
                     </div>
-                    <h1 className="text-2xl font-bold mb-4">{userData.username}'s Profile</h1>
-                    <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    />
-                    <img 
-                        src={getImageUrl(userData.profilePictureUrl)} 
-                        alt={`${userData.username}'s profile picture`}
-                        className={`w-32 h-32 rounded-full mb-4 hover:shadow-lg border-2 border-yellow-300 cursor-pointer
-                            ${currentUser === username ? 'hover:opacity-50 hover:scale-105 transition-transform duration-200' : ''}`}
-                        onClick={handleImageClick}
-                        title={currentUser === username ? "Click to change profile picture" : "Profile picture"}
-                    />
                     <div className="flex flex-col items-center">
-                    <h2 className="text-xl font-semibold">{`Username: ${userData.username}`}</h2>
-                    {allowEdit && (
-                        <div className="flex flex-col mt-2">
-                            <input 
-                                type="text" 
-                                placeholder="New Username" 
-                                className={styles.input}
-                                maxLength={20}
-                                minLength={2}
-                                onChange={(e) => setUserData({ ...userData, username: e.target.value })}
-                            />
-                        </div>
-                    )}
-                    {(currentUser === username) && (
-                        <>
-                            <h2 className="text-xl font-semibold">Password: ********</h2>
+                        <h1 className="text-2xl font-bold mb-4">{userData.username}'s Profile</h1>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
+                        <img 
+                            src={getImageUrl(userData.profilePictureUrl)} 
+                            alt={`${userData.username}'s profile picture`}
+                            className={`w-32 h-32 rounded-full mb-4 cursor-pointer border-2 border-yellow-300 ${currentUser === username ? 'hover:opacity-80 hover:scale-105 transition-transform duration-200' : ''}`}
+                            onClick={handleImageClick}
+                            title={currentUser === username ? "Click to change profile picture" : "Profile picture"}
+                        />
+                        <div className="flex flex-col items-center">
+                            <h2 className="text-xl font-semibold">{`Username: ${userData.username}`}</h2>
                             {allowEdit && (
-                                <div className="flex flex-col mt-2">
-                                    <input 
-                                        type="text" 
-                                        placeholder="New Password" 
-                                        className={styles.input}
-                                        maxLength={20}
-                                        minLength={2}
-                                        onChange={(e) => setUserData({ ...userData, password: e.target.value })}
-                                    />
+                                <div className="flex flex-col mt-2 w-full">
+                                    <input type="text" placeholder="New Username" className={styles.input} maxLength={20} minLength={2} onChange={(e) => setUserData({ ...userData, username: e.target.value })} />
                                 </div>
                             )}
-                        </>
-                    )}
-                    {allowEdit && (
-                        <div className="flex justify-center">
-                            <button 
-                                className={styles.button}
-                                onClick={() => {
-                                    setUserData({ ...userData, username: usernameDisplay ,password: passwordDisplay });
-                                    setAllowEdit(false);
-                                }}>
-                                    Cancel
-                                </button>
-                            {isDemoMode ? (
-                                <button 
-                                    className={styles.button}
-                                    onClick={() => {
-                                        setToastMessage('Cannot change details in Demo Mode!');
-                                        setShowToast(true);
-                                        setUserData({ ...userData, username: usernameDisplay ,password: passwordDisplay });
-                                        setAllowEdit(false);
-                                    }}
-                                >
-                                    Save Demo
-                                </button>
-                        ) : (
-                                <button 
-                                    className={styles.button}
-                                    onClick={async () => {
-                                        let usernameChanged = userData.username !== usernameDisplay;
-                                        let passwordChanged = userData.password !== passwordDisplay;
-                                        
-                                        if(passwordChanged)
-                                            await updatePassword(userData.password);
-
-                                        if(usernameChanged) 
-                                            await updateUsername(userData.username);
-
-                                        setAllowEdit(false);
-                                        if(usernameChanged || passwordChanged) {
-                                            sessionStorage.removeItem('token');
-                                            router.push('/login');
-                                        }
-                                    }}
-                                >
-                                    Save Changes
-                            </button>
+                            {(currentUser === username) && (
+                                <>
+                                    <h2 className="text-xl font-semibold mt-3">Password: ********</h2>
+                                    {allowEdit && (
+                                        <div className="flex flex-col mt-2 w-full">
+                                            <input type="text" placeholder="New Password" className={styles.input} maxLength={20} minLength={2} onChange={(e) => setUserData({ ...userData, password: e.target.value })} />
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            {allowEdit && (
+                                <div className="flex justify-center gap-3 mt-4">
+                                    <button className={styles.button} onClick={() => { setUserData({ ...userData, username: usernameDisplay ,password: passwordDisplay }); setAllowEdit(false); }}>Cancel</button>
+                                    {isDemoMode ? (
+                                        <button className={styles.button} onClick={() => { setToastMessage('Cannot change details in Demo Mode!'); setShowToast(true); setUserData({ ...userData, username: usernameDisplay ,password: passwordDisplay }); setAllowEdit(false); }}>Save Demo</button>
+                                    ) : (
+                                        <button className={styles.button} onClick={async () => {
+                                            let usernameChanged = userData.username !== usernameDisplay;
+                                            let passwordChanged = userData.password !== passwordDisplay;
+                                            if(passwordChanged) await updatePassword(userData.password);
+                                            if(usernameChanged) await updateUsername(userData.username);
+                                            setAllowEdit(false);
+                                            if(usernameChanged || passwordChanged) { sessionStorage.removeItem('token'); router.push('/login'); }
+                                        }}>Save Changes</button>
+                                    )}
+                                </div>
                             )}
                         </div>
-                            )}
+                        { //ADD IMAGE TO ACCOUNT COLLECTION IN PROGRESS
+                        /* <form onSubmit={submitImgToCollection}>
+                            <input className={`${styles.input}`}
+                            type="file"
+                            accept="image/*"
+                            multiple 
+                            onChange={handleImgToCollection}/>
+                            <button type="submit">Submit</button>
+                        </form> */}
+                        
                     </div>
                 </div>
             ) : (
-                <div>User not found</div>
+                <div className="muted">User not found</div>
             )}
         </div>
     );

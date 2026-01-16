@@ -85,11 +85,12 @@ public class AccountService {
     public void addImagetoCollection(MultipartFile image){
 
         Image addedImage = imageService.storeFile(image);
-        if (image == null) {
+        if (addedImage == null) {
             throw new RuntimeException("Failed to store profile picture");
         }
         Account account = getCurrentUser();
         account.getUserImageCollection().add(addedImage);
+        accountRepository.save(account);
         System.out.println(addedImage.getFileName()+" added to the COLLECTION!");
 
     }

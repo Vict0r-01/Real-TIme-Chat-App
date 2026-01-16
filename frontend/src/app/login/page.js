@@ -5,6 +5,7 @@ import { useAuth } from '../context/authContext';
 import Toast from '../components/toast';
 import { useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { styles } from '../styles/style';
 export default function Login() {
     const {login} = useAuth();
     const [password, setPassword] = useState('');
@@ -76,25 +77,22 @@ export default function Login() {
         }
     }
     return (
-        <div className="flex items-center justify-center bg-black-100 h-screen">
+        <div className="min-h-screen flex items-center justify-center p-6">
             <Toast message={toastMessage} show={showToast} onHide={handleHideToast} />
-            <div className="flex flex-col items-center justify-center border-yellow-300 border-2 rounded-lg p-4 m-4 w-1/2 h-1/2"
-            onSubmit={loginHandler}>
-                <form className="flex flex-col items-center justify-center w-full h-full">
-                    <h2 className="font-bold text-2xl mb-4">Login</h2>
+            <div className="w-full max-w-md card p-6">
+                <form className="flex flex-col" onSubmit={loginHandler}>
+                    <h2 className="font-bold text-2xl mb-4 text-accent text-center">Login</h2>
                     <input type="text" placeholder="Username" 
-                    className="border-2 border-yellow-300 rounded-lg p-2 mb-4 w-full" onChange={(e) => setUsername(e.target.value)}/>
+                    className={`${styles.input} mb-4 w-full`} onChange={(e) => setUsername(e.target.value)}/>
                     <input type="password" placeholder="Password" 
-                    className="border-2 border-yellow-300 rounded-lg p-2 mb-4 w-full" onChange={(e) => setPassword(e.target.value)}/>
+                    className={`${styles.input} mb-4 w-full`} onChange={(e) => setPassword(e.target.value)}/>
                     <button 
-                    className="border-2 border-yellow-300 rounded-lg p-2 mb-4 w-1/2 font-bold text-white transition duration-300 ease-in-out hover:bg-yellow-300 hover:text-black"
+                    className={`${styles.button} w-full mb-4`} 
                     type='submit'>Login</button>
                 </form>
                 <div className="flex flex-col items-center w-full">
-                    <p>Here to Test?</p>
-                    <button
-                    className="border-2 border-yellow-300 rounded-lg p-2 mb-4 w-1/2 font-bold text-white transition duration-300 ease-in-out hover:bg-yellow-300 hover:text-black"
-                    onClick={testHandler}>Test</button>
+                    <p className="muted mb-2">Here to Test?</p>
+                    <button className={`${styles.button} w-1/2`} onClick={testHandler}>Test</button>
                 </div>
             </div>
         </div>
